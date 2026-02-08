@@ -3,6 +3,7 @@
 [![OpenCode Plugin](https://img.shields.io/badge/OpenCode-Plugin-black)](https://opencode.ai)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-orange)](https://bun.sh)
+[![Test](https://github.com/yurihbm/opencode-plan-manager/actions/workflows/test.yml/badge.svg)](https://github.com/yurihbm/opencode-plan-manager/actions/workflows/test.yml)
 
 **AI-Native Implementation Planning for Modern Agentic Workflows.**
 
