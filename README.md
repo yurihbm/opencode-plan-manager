@@ -24,6 +24,21 @@ Plan Manager solves this by enforcing **Plan-to-Code Determinism**:
 
 ---
 
+## ⚙️ Installation
+
+Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.json or similar):
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["opencode-plan-manager@0.1.0"]
+}
+```
+
+> ⚠️ By specifying the version, you improve OpenCode startup time.
+
+---
+
 ## 🤖 The Agentic Workflow
 
 This plugin is optimized for a dual-agent hierarchy, utilizing specialized prompts found in `src/prompts/`:
@@ -34,6 +49,9 @@ This plugin is optimized for a dual-agent hierarchy, utilizing specialized promp
 2.  **Build Agent (`build.txt`):** An implementation specialist that executes plans with high precision.
     - **Logic:** If a plan exists, it _must_ follow it. If a task is too complex, it will suggest calling the Plan Agent first.
     - **Task Management:** Automatically handles task state transitions from `pending` to `in_progress` to `done`.
+
+> ⚠️ This plugin uses the built-in `Plan` and `Build` agents (see [https://opencode.ai/docs/agents/](https://opencode.ai/docs/agents/))
+> and adds custom prompts and system reminders to optimize them for the provided tools, but does not create new agent types.
 
 ---
 
