@@ -1,10 +1,31 @@
 {
   "name": "opencode-plan-manager",
-  "module": "src/index.ts",
+  "version": "0.1.0",
+  "description": "A plugin for managing plans in OpenCode.",
+  "author": "Yuri Maciel <35900428+yurihbm@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yurihbm/opencode-plan-manager.git"
+  },
+  "keywords": [
+    "opencode",
+    "plugin",
+    "plan",
+    "manager",
+    "ai",
+    "agent"
+  ],
   "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "bun build src/index.ts --outdir=dist --target node",
     "build:minify": "bun build src/index.ts --outdir=dist --target node --minify",
+    "prepublishOnly": "bun run build:minify",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
