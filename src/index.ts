@@ -3,8 +3,6 @@ import PLAN_PROMPT from "./prompts/plan.txt";
 import BUILD_PROMPT from "./prompts/build.txt";
 import { planCreate, planList, planRead, planUpdate } from "./tools";
 
-const SESSION_AGENT_MAP = new Map<string, string>();
-
 const PLUGIN_NAME = "opencode-plan-manager";
 
 /**
@@ -30,24 +28,6 @@ export const OpenPlanManagerPlugin: Plugin = async ({ client }) => {
 
   return {
     name: PLUGIN_NAME,
-    // 1. Detect agent when user sends a message
-    "chat.message": async (input) => {
-      if (input.agent) {
-        SESSION_AGENT_MAP.set(input.sessionID, input.agent);
-      }
-    },
-    event: async (input) => {
-      const { event } = input;
-
-      if (event.type === "message.updated") {
-        const props = event.properties as any;
-        const info = props?.info;
-
-        if (info?.sessionID && info?.agent) {
-          SESSION_AGENT_MAP.set(info.sessionID, info.agent);
-        }
-      }
-    },
     config: async (input) => {
       if (input.agent?.plan && !input.agent.plan.prompt) {
         input.agent.plan = {
