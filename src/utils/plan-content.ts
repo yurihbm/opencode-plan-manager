@@ -9,7 +9,12 @@
  * Replaces the old `tasks.ts` and `frontmatter.ts` modules.
  */
 
-import type { PlanTask, TaskStatus, PlanProgress, ImplementationInput } from "../types";
+import type {
+	ImplementationInput,
+	PlanProgress,
+	PlanTask,
+	TaskStatus,
+} from "../types";
 
 // ... existing code ...
 
@@ -24,22 +29,21 @@ import type { PlanTask, TaskStatus, PlanProgress, ImplementationInput } from "..
  * @returns Array of duplicate task names (empty if all unique)
  */
 export function validateUniqueTaskNames(impl: ImplementationInput): string[] {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
+	const seen = new Set<string>();
+	const duplicates = new Set<string>();
 
-  for (const phase of impl.phases) {
-    for (const task of phase.tasks) {
-      if (seen.has(task)) {
-        duplicates.add(task);
-      } else {
-        seen.add(task);
-      }
-    }
-  }
+	for (const phase of impl.phases) {
+		for (const task of phase.tasks) {
+			if (seen.has(task)) {
+				duplicates.add(task);
+			} else {
+				seen.add(task);
+			}
+		}
+	}
 
-  return Array.from(duplicates);
+	return Array.from(duplicates);
 }
-
 
 // ============================================================================
 // Constants
@@ -55,18 +59,18 @@ const TASK_REGEX = /^- \[([ ~x])\] (.+)$/gm;
  * Maps checkbox characters to TaskStatus values.
  */
 const MARKER_TO_STATUS: Record<string, TaskStatus> = {
-  " ": "pending",
-  "~": "in_progress",
-  x: "done",
+	" ": "pending",
+	"~": "in_progress",
+	x: "done",
 };
 
 /**
  * Maps TaskStatus values to checkbox characters.
  */
 const STATUS_TO_MARKER: Record<TaskStatus, string> = {
-  pending: " ",
-  in_progress: "~",
-  done: "x",
+	pending: " ",
+	in_progress: "~",
+	done: "x",
 };
 
 // ============================================================================
@@ -94,37 +98,37 @@ const STATUS_TO_MARKER: Record<TaskStatus, string> = {
  * ```
  */
 export function parseTasks(content: string): PlanTask[] {
-  const tasks: PlanTask[] = [];
+	const tasks: PlanTask[] = [];
 
-  // Reset regex state
-  TASK_REGEX.lastIndex = 0;
+	// Reset regex state
+	TASK_REGEX.lastIndex = 0;
 
-  let match: RegExpExecArray | null;
-  let lineNumber = 0;
-  let lastSearchIndex = 0;
+	let match: RegExpExecArray | null;
+	let lineNumber = 0;
+	let lastSearchIndex = 0;
 
-  while ((match = TASK_REGEX.exec(content)) !== null) {
-    const marker = match[1]!;
-    const taskContent = match[2]?.trim() ?? "";
+	while ((match = TASK_REGEX.exec(content)) !== null) {
+		const marker = match[1]!;
+		const taskContent = match[2]?.trim() ?? "";
 
-    // Update line number counter based on newlines skipped since last match
-    // This avoids the O(N^2) substring split of the entire prefix
-    const skippedContent = content.substring(lastSearchIndex, match.index);
-    lineNumber += (skippedContent.match(/\n/g) || []).length;
-    lastSearchIndex = match.index;
+		// Update line number counter based on newlines skipped since last match
+		// This avoids the O(N^2) substring split of the entire prefix
+		const skippedContent = content.substring(lastSearchIndex, match.index);
+		lineNumber += (skippedContent.match(/\n/g) || []).length;
+		lastSearchIndex = match.index;
 
-    if (!taskContent) continue;
+		if (!taskContent) continue;
 
-    const status = MARKER_TO_STATUS[marker] ?? "pending";
+		const status = MARKER_TO_STATUS[marker] ?? "pending";
 
-    tasks.push({
-      content: taskContent,
-      status,
-      lineNumber,
-    });
-  }
+		tasks.push({
+			content: taskContent,
+			status,
+			lineNumber,
+		});
+	}
 
-  return tasks;
+	return tasks;
 }
 
 // ============================================================================
@@ -151,28 +155,28 @@ export function parseTasks(content: string): PlanTask[] {
  * ```
  */
 export function updateTaskStatus(
-  content: string,
-  taskContent: string,
-  newStatus: TaskStatus,
+	content: string,
+	taskContent: string,
+	newStatus: TaskStatus,
 ): string {
-  // Escape special regex characters in the task content
-  const escapedContent = taskContent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+	// Escape special regex characters in the task content
+	const escapedContent = taskContent.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  // Match the task line with any status marker: "- [?] taskContent"
-  // Capture group 1: "- ["
-  // Capture group 2: "] taskContent"
-  const pattern = new RegExp(`(- \\[)[ ~x](\\] ${escapedContent})`);
+	// Match the task line with any status marker: "- [?] taskContent"
+	// Capture group 1: "- ["
+	// Capture group 2: "] taskContent"
+	const pattern = new RegExp(`(- \\[)[ ~x](\\] ${escapedContent})`);
 
-  if (!pattern.test(content)) {
-    throw new Error(`Task not found: "${taskContent}"`);
-  }
+	if (!pattern.test(content)) {
+		throw new Error(`Task not found: "${taskContent}"`);
+	}
 
-  const newMarker = STATUS_TO_MARKER[newStatus];
+	const newMarker = STATUS_TO_MARKER[newStatus];
 
-  // Replace only the marker char
-  // $1 is prefix "- ["
-  // $2 is suffix "] taskContent"
-  return content.replace(pattern, `$1${newMarker}$2`);
+	// Replace only the marker char
+	// $1 is prefix "- ["
+	// $2 is suffix "] taskContent"
+	return content.replace(pattern, `$1${newMarker}$2`);
 }
 
 // ============================================================================
@@ -192,16 +196,16 @@ export function updateTaskStatus(
  * ```
  */
 export function calculateProgress(tasks: PlanTask[]): PlanProgress {
-  const total = tasks.length;
+	const total = tasks.length;
 
-  if (total === 0) {
-    return { total: 0, done: 0, in_progress: 0, pending: 0, percentage: 100 };
-  }
+	if (total === 0) {
+		return { total: 0, done: 0, in_progress: 0, pending: 0, percentage: 100 };
+	}
 
-  const done = tasks.filter((t) => t.status === "done").length;
-  const in_progress = tasks.filter((t) => t.status === "in_progress").length;
-  const pending = tasks.filter((t) => t.status === "pending").length;
-  const percentage = Math.round((done / total) * 100);
+	const done = tasks.filter((t) => t.status === "done").length;
+	const in_progress = tasks.filter((t) => t.status === "in_progress").length;
+	const pending = tasks.filter((t) => t.status === "pending").length;
+	const percentage = Math.round((done / total) * 100);
 
-  return { total, done, in_progress, pending, percentage };
+	return { total, done, in_progress, pending, percentage };
 }

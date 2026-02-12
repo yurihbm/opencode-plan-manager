@@ -5,9 +5,11 @@
  * No external dependencies beyond Zod.
  */
 
-import { join } from "node:path";
-import { MetadataSchema } from "../schemas";
 import type { PlanMetadata } from "../types";
+
+import { join } from "node:path";
+
+import { MetadataSchema } from "../schemas";
 
 /**
  * Reads and validates `metadata.json` from a plan folder.
@@ -24,17 +26,17 @@ import type { PlanMetadata } from "../types";
  * ```
  */
 export async function readMetadata(folderPath: string): Promise<PlanMetadata> {
-  const filePath = join(folderPath, "metadata.json");
-  const file = Bun.file(filePath);
+	const filePath = join(folderPath, "metadata.json");
+	const file = Bun.file(filePath);
 
-  if (!(await file.exists())) {
-    throw new Error(`metadata.json not found in ${folderPath}`);
-  }
+	if (!(await file.exists())) {
+		throw new Error(`metadata.json not found in ${folderPath}`);
+	}
 
-  const raw = await file.text();
-  const parsed = JSON.parse(raw);
+	const raw = await file.text();
+	const parsed = JSON.parse(raw);
 
-  return validateMetadata(parsed);
+	return validateMetadata(parsed);
 }
 
 /**
@@ -60,16 +62,16 @@ export async function readMetadata(folderPath: string): Promise<PlanMetadata> {
  * ```
  */
 export async function writeMetadata(
-  folderPath: string,
-  data: PlanMetadata,
+	folderPath: string,
+	data: PlanMetadata,
 ): Promise<PlanMetadata> {
-  const validated = validateMetadata(data);
-  const filePath = join(folderPath, "metadata.json");
-  const content = JSON.stringify(validated, null, 2) + "\n";
+	const validated = validateMetadata(data);
+	const filePath = join(folderPath, "metadata.json");
+	const content = JSON.stringify(validated, null, 2) + "\n";
 
-  await Bun.write(filePath, content);
+	await Bun.write(filePath, content);
 
-  return validated;
+	return validated;
 }
 
 /**
@@ -80,14 +82,14 @@ export async function writeMetadata(
  * @throws {Error} If validation fails with descriptive message
  */
 export function validateMetadata(data: unknown): PlanMetadata {
-  const result = MetadataSchema.safeParse(data);
+	const result = MetadataSchema.safeParse(data);
 
-  if (!result.success) {
-    const issues = result.error.issues
-      .map((i) => `  - ${i.path.join(".")}: ${i.message}`)
-      .join("\n");
-    throw new Error(`Invalid metadata:\n${issues}`);
-  }
+	if (!result.success) {
+		const issues = result.error.issues
+			.map((i) => `  - ${i.path.join(".")}: ${i.message}`)
+			.join("\n");
+		throw new Error(`Invalid metadata:\n${issues}`);
+	}
 
-  return result.data;
+	return result.data;
 }

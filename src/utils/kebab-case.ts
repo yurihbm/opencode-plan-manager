@@ -22,20 +22,20 @@
  * ```
  */
 export function toKebabCase(title: string): string {
-  return (
-    title
-      // Normalize unicode (handles accents like é -> e)
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      // Convert to lowercase
-      .toLowerCase()
-      // Replace spaces and underscores with hyphens
-      .replace(/[\s_]+/g, "-")
-      // Replace special characters with hyphens (keep alphanumeric and hyphens)
-      .replace(/[^a-z0-9-]/g, "-")
-      // Collapse multiple consecutive hyphens
-      .replace(/-+/g, "-")
-      // Remove leading and trailing hyphens
-      .replace(/^-+|-+$/g, "")
-  );
+	return (
+		title
+			// Normalize unicode (handles accents like é -> e)
+			.normalize("NFD")
+			.replace(/[\u0300-\u036f]/g, "")
+			// Convert to lowercase
+			.toLowerCase()
+			// Replace spaces and underscores with hyphens
+			.replace(/[\s_]+/g, "-")
+			// Replace special characters with hyphens (keep alphanumeric and hyphens)
+			.replace(/[^a-z0-9-]/g, "-")
+			// Collapse multiple consecutive hyphens
+			.replace(/-+/g, "-")
+			// Remove leading and trailing hyphens
+			.replace(/^-+|-+$/g, "")
+	);
 }

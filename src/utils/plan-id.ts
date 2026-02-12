@@ -30,20 +30,20 @@ import { toKebabCase } from "./kebab-case";
  * ```
  */
 export function generatePlanId(
-  type: string,
-  title: string,
-  date: Date = new Date(),
+	type: string,
+	title: string,
+	date: Date = new Date(),
 ): string {
-  const kebab = toKebabCase(title);
+	const kebab = toKebabCase(title);
 
-  if (!kebab) {
-    throw new Error("Title must contain at least one alphanumeric character");
-  }
+	if (!kebab) {
+		throw new Error("Title must contain at least one alphanumeric character");
+	}
 
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const dateStr = `${year}${month}${day}`;
+	const year = date.getFullYear();
+	const month = String(date.getMonth() + 1).padStart(2, "0");
+	const day = String(date.getDate()).padStart(2, "0");
+	const dateStr = `${year}${month}${day}`;
 
-  return `${type}_${kebab}_${dateStr}`;
+	return `${type}_${kebab}_${dateStr}`;
 }
