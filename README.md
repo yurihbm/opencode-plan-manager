@@ -31,7 +31,7 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-plan-manager@0.1.0"]
+  "plugin": ["opencode-plan-manager@0.2.0"]
 }
 ```
 
@@ -44,14 +44,16 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 This plugin is optimized for a dual-agent hierarchy, utilizing specialized prompts found in `src/prompts/`:
 
 1.  **Plan Agent (`plan.txt`):** A high-reasoning architect that transforms vague requirements into structured, phased implementation plans.
-    - **System Reminder:** Uses a custom `src/system/plan.txt` to inject planning rigor into the agent's core reasoning loop.
-    - **Workflow:** Follows a 4-step process: Context Discovery → Strategy Mapping → Phase Definition → Task Breakdown.
+    - **Workflow:** Follows a 4-step process: Analysis → Deduplication → Context Decision → Plan Creation.
 2.  **Build Agent (`build.txt`):** An implementation specialist that executes plans with high precision.
     - **Logic:** If a plan exists, it _must_ follow it. If a task is too complex, it will suggest calling the Plan Agent first.
     - **Task Management:** Automatically handles task state transitions from `pending` to `in_progress` to `done`.
 
 > ⚠️ This plugin uses the built-in `Plan` and `Build` agents (see [https://opencode.ai/docs/agents/](https://opencode.ai/docs/agents/))
-> and adds custom prompts and system reminders to optimize them for the provided tools, but does not create new agent types.
+> and adds custom system prompts to optimize them for the provided tools, but does not create new agent types.
+
+> ℹ️ If you provide custom prompts for `Plan` or `Build` agents at your configuration file, this plugin will NOT inject its optimized prompts.
+> Your prompts have priority over the plugin's defaults.
 
 ---
 
@@ -61,7 +63,7 @@ This plugin is optimized for a dual-agent hierarchy, utilizing specialized promp
 - 📉 **Token Optimization:** Native support for `summary` and `selective` views to keep agent context windows clean and focused.
 - 🔄 **Atomic State Transitions:** Safe folder movements (`rename()`) ensure that plan status is always in sync with the filesystem.
 - ✅ **Deterministic Task Management:** Support for three task states (`[ ]`, `[~]`, `[x]`) with batch update capabilities.
-- 🚀 **High Performance:** Metadata-only listing for fast scanning of 100+ plans in milliseconds.
+- 🚀 **High Performance:** Metadata-only listing for fast scanning of plans.
 
 ---
 
