@@ -67,9 +67,7 @@ export const SpecInputSchema = z.object({
         .string()
         .min(1, "Non-functional requirement must be at least 1 character")
         .max(300, "Non-functional requirement must be at most 300 characters")
-        .describe(
-          "Non-functional requirement (performance, security, etc.)",
-        ),
+        .describe("Non-functional requirement (performance, security, etc.)"),
     )
     .min(1, "At least one non-functional requirement is required")
     .describe(
@@ -155,45 +153,44 @@ export const CreatePlanInputSchema = z.object({
  *
  * At least one of `status`, `spec`, `plan`, `taskContent` must be provided.
  */
-export const UpdatePlanInputBaseSchema = z
-  .object({
-    plan_id: z.string().min(1).describe("The plan's plan_id (folder name)"),
-    status: PlanStatusEnum.optional().describe(
-      "New status — triggers folder move. Valid: pending→in_progress, in_progress→done, in_progress→pending",
-    ),
-    spec: SpecInputSchema.optional().describe(
-      "New spec content as structured object (replaces entire file)",
-    ),
-    plan: ImplementationInputSchema.optional().describe(
-      "New plan content as structured object (replaces entire file)",
-    ),
-    taskUpdates: z
-      .array(
-        z.object({
-          content: z
-            .string()
-            .min(1)
-            .describe(
-              "Task text to match for status toggle (exact match, without checkbox prefix)",
-            ),
-          status: TaskStatusEnum.describe("New status for the matched task."),
-        }),
-      )
-      .optional()
-      .describe("List of task updates to apply in batch."),
-  });
+export const UpdatePlanInputBaseSchema = z.object({
+  plan_id: z.string().min(1).describe("The plan's plan_id (folder name)"),
+  status: PlanStatusEnum.optional().describe(
+    "New status — triggers folder move. Valid: pending→in_progress, in_progress→done, in_progress→pending",
+  ),
+  spec: SpecInputSchema.optional().describe(
+    "New spec content as structured object (replaces entire file)",
+  ),
+  plan: ImplementationInputSchema.optional().describe(
+    "New plan content as structured object (replaces entire file)",
+  ),
+  taskUpdates: z
+    .array(
+      z.object({
+        content: z
+          .string()
+          .min(1)
+          .describe(
+            "Task text to match for status toggle (exact match, without checkbox prefix)",
+          ),
+        status: TaskStatusEnum.describe("New status for the matched task."),
+      }),
+    )
+    .optional()
+    .describe("List of task updates to apply in batch."),
+});
 
 export const UpdatePlanInputSchema = UpdatePlanInputBaseSchema.refine(
-    (data) =>
-      data.status !== undefined ||
-      data.spec !== undefined ||
-      data.plan !== undefined ||
-      data.taskUpdates !== undefined,
-    {
-      message:
-        "At least one of 'status', 'spec', 'plan', or 'taskUpdates' must be provided",
-    },
-  );
+  (data) =>
+    data.status !== undefined ||
+    data.spec !== undefined ||
+    data.plan !== undefined ||
+    data.taskUpdates !== undefined,
+  {
+    message:
+      "At least one of 'status', 'spec', 'plan', or 'taskUpdates' must be provided",
+  },
+);
 
 // ============================================================================
 // Status Transition Validation

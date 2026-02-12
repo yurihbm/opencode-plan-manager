@@ -11,9 +11,8 @@ const PLUGIN_NAME = "opencode-plan-manager";
  * Returns a plugin instance with 4 tools for managing implementation plans
  * using a folder-per-plan architecture with status-based directories.
  *
- * It also injects a system reminder for the "plan" agent to ensure it uses the
- * tools correctly, and tracks which agent is active in each session to apply
- * the reminder conditionally.
+ * It also injects system prompts for the Plan and Build agents if not already
+ * provided in the configuration.
  *
  * @returns Plugin instance with tool definitions
  */
