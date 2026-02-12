@@ -21,47 +21,47 @@ import type { SpecInput, ImplementationInput } from "../types";
  * @returns Formatted markdown string for spec.md
  */
 export function generateSpecMarkdown(spec: SpecInput): string {
-  const sections: string[] = [];
+	const sections: string[] = [];
 
-  // Overview section
-  sections.push("## Overview");
-  sections.push("");
-  sections.push(spec.overview);
-  sections.push("");
+	// Overview section
+	sections.push("## Overview");
+	sections.push("");
+	sections.push(spec.overview);
+	sections.push("");
 
-  // Functional Requirements
-  sections.push("## Functional Requirements");
-  sections.push("");
-  for (const req of spec.functionals) {
-    sections.push(`- ${req}`);
-  }
-  sections.push("");
+	// Functional Requirements
+	sections.push("## Functional Requirements");
+	sections.push("");
+	for (const req of spec.functionals) {
+		sections.push(`- ${req}`);
+	}
+	sections.push("");
 
-  // Non-Functional Requirements
-  sections.push("## Non-Functional Requirements");
-  sections.push("");
-  for (const req of spec.nonFunctionals) {
-    sections.push(`- ${req}`);
-  }
-  sections.push("");
+	// Non-Functional Requirements
+	sections.push("## Non-Functional Requirements");
+	sections.push("");
+	for (const req of spec.nonFunctionals) {
+		sections.push(`- ${req}`);
+	}
+	sections.push("");
 
-  // Acceptance Criteria
-  sections.push("## Acceptance Criteria");
-  sections.push("");
-  for (const criteria of spec.acceptanceCriterias) {
-    sections.push(`- ${criteria}`);
-  }
-  sections.push("");
+	// Acceptance Criteria
+	sections.push("## Acceptance Criteria");
+	sections.push("");
+	for (const criteria of spec.acceptanceCriterias) {
+		sections.push(`- ${criteria}`);
+	}
+	sections.push("");
 
-  // Out of Scope
-  sections.push("## Out of Scope");
-  sections.push("");
-  for (const item of spec.outOfScope) {
-    sections.push(`- ${item}`);
-  }
-  sections.push("");
+	// Out of Scope
+	sections.push("## Out of Scope");
+	sections.push("");
+	for (const item of spec.outOfScope) {
+		sections.push(`- ${item}`);
+	}
+	sections.push("");
 
-  return sections.join("\n");
+	return sections.join("\n");
 }
 
 /**
@@ -77,26 +77,26 @@ export function generateSpecMarkdown(spec: SpecInput): string {
  * @returns Formatted markdown string for plan.md
  */
 export function generatePlanMarkdown(impl: ImplementationInput): string {
-  const sections: string[] = [];
+	const sections: string[] = [];
 
-  // Description section
-  sections.push("## Description");
-  sections.push("");
-  sections.push(impl.description);
-  sections.push("");
+	// Description section
+	sections.push("## Description");
+	sections.push("");
+	sections.push(impl.description);
+	sections.push("");
 
-  // Phases section
-  sections.push("## Phases");
-  sections.push("");
+	// Phases section
+	sections.push("## Phases");
+	sections.push("");
 
-  for (const phase of impl.phases) {
-    sections.push(`### ${phase.phase}`);
-    sections.push("");
-    for (const task of phase.tasks) {
-      sections.push(`- [ ] ${task}`);
-    }
-    sections.push("");
-  }
+	for (const phase of impl.phases) {
+		sections.push(`### ${phase.phase}`);
+		sections.push("");
+		for (const task of phase.tasks) {
+			sections.push(`- [ ] ${task}`);
+		}
+		sections.push("");
+	}
 
-  return sections.join("\n");
+	return sections.join("\n");
 }

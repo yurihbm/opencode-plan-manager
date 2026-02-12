@@ -1,41 +1,57 @@
 {
-  "name": "opencode-plan-manager",
-  "version": "0.2.1",
-  "description": "A plugin for managing plans in OpenCode.",
-  "author": "Yuri Maciel <35900428+yurihbm@users.noreply.github.com>",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/yurihbm/opencode-plan-manager.git"
-  },
-  "keywords": [
-    "opencode",
-    "plugin",
-    "plan",
-    "manager",
-    "ai",
-    "agent"
-  ],
-  "type": "module",
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "build": "bun build src/index.ts --outdir=dist --target node",
-    "build:minify": "bun build src/index.ts --outdir=dist --target node --minify",
-    "prepublishOnly": "bun run build:minify",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
-  },
-  "devDependencies": {
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.9.3"
-  },
-  "dependencies": {
-    "@opencode-ai/plugin": "^1.1.59"
-  }
+	"name": "opencode-plan-manager",
+	"version": "0.2.1",
+	"description": "A plugin for managing plans in OpenCode.",
+	"author": "Yuri Maciel <35900428+yurihbm@users.noreply.github.com>",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/yurihbm/opencode-plan-manager.git"
+	},
+	"keywords": [
+		"opencode",
+		"plugin",
+		"plan",
+		"manager",
+		"ai",
+		"agent"
+	],
+	"type": "module",
+	"main": "dist/index.js",
+	"module": "dist/index.js",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "bun build src/index.ts --outdir=dist --target node",
+		"build:minify": "bun build src/index.ts --outdir=dist --target node --minify",
+		"prepublishOnly": "bun run build:minify",
+		"test": "bun test",
+		"test:watch": "bun test --watch",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/bun": "latest",
+		"eslint": "^10.0.0",
+		"eslint-config-prettier": "^10.1.8",
+		"globals": "^17.3.0",
+		"husky": "^9.1.7",
+		"jiti": "^2.6.1",
+		"lint-staged": "^16.2.7",
+		"prettier": "^3.8.1",
+		"typescript-eslint": "^8.55.0"
+	},
+	"peerDependencies": {
+		"typescript": "^5.9.3"
+	},
+	"dependencies": {
+		"@opencode-ai/plugin": "^1.1.59"
+	},
+	"lint-staged": {
+		"*.ts": [
+			"eslint --fix",
+			"prettier --write"
+		]
+	}
 }

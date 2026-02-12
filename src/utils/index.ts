@@ -18,10 +18,10 @@ export { readMetadata, writeMetadata, validateMetadata } from "./metadata";
 
 // Plan content utilities
 export {
-  parseTasks,
-  updateTaskStatus,
-  calculateProgress,
-  validateUniqueTaskNames,
+	parseTasks,
+	updateTaskStatus,
+	calculateProgress,
+	validateUniqueTaskNames,
 } from "./plan-content";
 
 // Markdown generation utilities
@@ -29,9 +29,9 @@ export { generateSpecMarkdown, generatePlanMarkdown } from "./markdown";
 
 // Path utilities
 export {
-  getPlanPaths,
-  ensurePlanDirectories,
-  resolvePlanFolder,
-  listPlanFolders,
-  movePlanFolder,
+	getPlanPaths,
+	ensurePlanDirectories,
+	resolvePlanFolder,
+	listPlanFolders,
+	movePlanFolder,
 } from "./paths";

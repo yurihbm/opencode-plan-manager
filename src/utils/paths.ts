@@ -23,8 +23,8 @@ import { PlanStatusEnum } from "../schemas";
 
 // Sort order: in_progress (highest priority) -> pending -> done
 const STATUS_DIRS = [...PlanStatusEnum.options].sort((a, b) => {
-  const priority = { in_progress: 0, pending: 1, done: 2 };
-  return priority[a] - priority[b];
+	const priority = { in_progress: 0, pending: 1, done: 2 };
+	return priority[a] - priority[b];
 });
 
 // ============================================================================
@@ -49,13 +49,13 @@ const STATUS_DIRS = [...PlanStatusEnum.options].sort((a, b) => {
  * ```
  */
 export function getPlanPaths(cwd: string): PlanPaths {
-  const root = join(cwd, ".opencode", "plans");
-  return {
-    root,
-    pending: join(root, "pending"),
-    in_progress: join(root, "in_progress"),
-    done: join(root, "done"),
-  };
+	const root = join(cwd, ".opencode", "plans");
+	return {
+		root,
+		pending: join(root, "pending"),
+		in_progress: join(root, "in_progress"),
+		done: join(root, "done"),
+	};
 }
 
 /**
@@ -66,13 +66,13 @@ export function getPlanPaths(cwd: string): PlanPaths {
  * @param cwd - The current working directory (project root)
  */
 export async function ensurePlanDirectories(cwd: string): Promise<void> {
-  const paths = getPlanPaths(cwd);
+	const paths = getPlanPaths(cwd);
 
-  await Promise.all([
-    mkdir(paths.pending, { recursive: true }),
-    mkdir(paths.in_progress, { recursive: true }),
-    mkdir(paths.done, { recursive: true }),
-  ]);
+	await Promise.all([
+		mkdir(paths.pending, { recursive: true }),
+		mkdir(paths.in_progress, { recursive: true }),
+		mkdir(paths.done, { recursive: true }),
+	]);
 }
 
 /**
@@ -94,21 +94,21 @@ export async function ensurePlanDirectories(cwd: string): Promise<void> {
  * ```
  */
 export async function resolvePlanFolder(
-  cwd: string,
-  planId: string,
+	cwd: string,
+	planId: string,
 ): Promise<PlanLocation | null> {
-  const paths = getPlanPaths(cwd);
+	const paths = getPlanPaths(cwd);
 
-  for (const status of STATUS_DIRS) {
-    const folderPath = join(paths[status], planId);
-    const metadataPath = join(folderPath, "metadata.json");
+	for (const status of STATUS_DIRS) {
+		const folderPath = join(paths[status], planId);
+		const metadataPath = join(folderPath, "metadata.json");
 
-    if (await Bun.file(metadataPath).exists()) {
-      return { path: folderPath, status };
-    }
-  }
+		if (await Bun.file(metadataPath).exists()) {
+			return { path: folderPath, status };
+		}
+	}
 
-  return null;
+	return null;
 }
 
 /**
@@ -119,19 +119,19 @@ export async function resolvePlanFolder(
  * @returns Array of folder names (plan IDs)
  */
 export async function listPlanFolders(
-  cwd: string,
-  status: PlanStatus,
+	cwd: string,
+	status: PlanStatus,
 ): Promise<string[]> {
-  const paths = getPlanPaths(cwd);
-  const dirPath = paths[status];
+	const paths = getPlanPaths(cwd);
+	const dirPath = paths[status];
 
-  try {
-    const entries = await readdir(dirPath, { withFileTypes: true });
-    return entries.filter((e) => e.isDirectory()).map((e) => e.name);
-  } catch {
-    // Directory doesn't exist yet — that's OK
-    return [];
-  }
+	try {
+		const entries = await readdir(dirPath, { withFileTypes: true });
+		return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+	} catch {
+		// Directory doesn't exist yet — that's OK
+		return [];
+	}
 }
 
 /**
@@ -147,20 +147,20 @@ export async function listPlanFolders(
  * @throws {Error} If the source folder doesn't exist
  */
 export async function movePlanFolder(
-  cwd: string,
-  planId: string,
-  fromStatus: PlanStatus,
-  toStatus: PlanStatus,
+	cwd: string,
+	planId: string,
+	fromStatus: PlanStatus,
+	toStatus: PlanStatus,
 ): Promise<string> {
-  const paths = getPlanPaths(cwd);
-  const sourcePath = join(paths[fromStatus], planId);
-  const targetPath = join(paths[toStatus], planId);
+	const paths = getPlanPaths(cwd);
+	const sourcePath = join(paths[fromStatus], planId);
+	const targetPath = join(paths[toStatus], planId);
 
-  // Ensure target directory exists
-  await mkdir(paths[toStatus], { recursive: true });
+	// Ensure target directory exists
+	await mkdir(paths[toStatus], { recursive: true });
 
-  // Atomic move
-  await rename(sourcePath, targetPath);
+	// Atomic move
+	await rename(sourcePath, targetPath);
 
-  return targetPath;
+	return targetPath;
 }

@@ -48,23 +48,23 @@ export type TaskStatus = "pending" | "in_progress" | "done";
  * It is intentionally small and cheap to parse.
  */
 export interface PlanMetadata {
-  /** Unique identifier — matches the folder name */
-  plan_id: string;
+	/** Unique identifier — matches the folder name */
+	plan_id: string;
 
-  /** Classification of the plan */
-  type: PlanType;
+	/** Classification of the plan */
+	type: PlanType;
 
-  /** Current lifecycle status */
-  status: PlanStatus;
+	/** Current lifecycle status */
+	status: PlanStatus;
 
-  /** ISO 8601 timestamp of creation */
-  created_at: string;
+	/** ISO 8601 timestamp of creation */
+	created_at: string;
 
-  /** ISO 8601 timestamp of last modification */
-  updated_at: string;
+	/** ISO 8601 timestamp of last modification */
+	updated_at: string;
 
-  /** Short human-readable summary of the plan */
-  description: string;
+	/** Short human-readable summary of the plan */
+	description: string;
 }
 
 // ============================================================================
@@ -77,14 +77,14 @@ export interface PlanMetadata {
  * Tasks are identified by checkbox syntax: `- [ ]`, `- [~]`, or `- [x]`.
  */
 export interface PlanTask {
-  /** Task description text (without checkbox prefix) */
-  content: string;
+	/** Task description text (without checkbox prefix) */
+	content: string;
 
-  /** Current status of the task */
-  status: TaskStatus;
+	/** Current status of the task */
+	status: TaskStatus;
 
-  /** Original line number in plan.md (0-based) */
-  lineNumber: number;
+	/** Original line number in plan.md (0-based) */
+	lineNumber: number;
 }
 
 /**
@@ -92,11 +92,11 @@ export interface PlanTask {
  * Used for batch updating multiple tasks at once.
  */
 export interface TaskUpdate {
-  /** The text content of the task to update (must match exactly) */
-  content: string;
+	/** The text content of the task to update (must match exactly) */
+	content: string;
 
-  /** The new status to set */
-  status: TaskStatus;
+	/** The new status to set */
+	status: TaskStatus;
 }
 
 // ============================================================================
@@ -117,20 +117,20 @@ export type PlanView = "summary" | "spec" | "plan" | "full";
  * Progress statistics calculated from task statuses.
  */
 export interface PlanProgress {
-  /** Total number of tasks */
-  total: number;
+	/** Total number of tasks */
+	total: number;
 
-  /** Number of completed tasks */
-  done: number;
+	/** Number of completed tasks */
+	done: number;
 
-  /** Number of in-progress tasks */
-  in_progress: number;
+	/** Number of in-progress tasks */
+	in_progress: number;
 
-  /** Number of pending tasks */
-  pending: number;
+	/** Number of pending tasks */
+	pending: number;
 
-  /** Completion percentage (0-100) */
-  percentage: number;
+	/** Completion percentage (0-100) */
+	percentage: number;
 }
 
 /**
@@ -138,20 +138,20 @@ export interface PlanProgress {
  * Fields are optional based on the requested `PlanView`.
  */
 export interface ParsedPlan {
-  /** Plan metadata (always present) */
-  metadata: PlanMetadata;
+	/** Plan metadata (always present) */
+	metadata: PlanMetadata;
 
-  /** Progress statistics (always present) */
-  progress: PlanProgress;
+	/** Progress statistics (always present) */
+	progress: PlanProgress;
 
-  /** Specification content from `spec.md` (present in `spec` and `full` views) */
-  spec?: string;
+	/** Specification content from `spec.md` (present in `spec` and `full` views) */
+	spec?: string;
 
-  /** Implementation plan content from `plan.md` (present in `plan` and `full` views) */
-  plan?: string;
+	/** Implementation plan content from `plan.md` (present in `plan` and `full` views) */
+	plan?: string;
 
-  /** Parsed tasks from `plan.md` (present in `plan` and `full` views) */
-  tasks?: PlanTask[];
+	/** Parsed tasks from `plan.md` (present in `plan` and `full` views) */
+	tasks?: PlanTask[];
 }
 
 // ============================================================================
@@ -163,31 +163,31 @@ export interface ParsedPlan {
  * This replaces free-form markdown to ensure deterministic spec.md generation.
  */
 export interface SpecInput {
-  /** Detailed overview of what needs to be done */
-  overview: string;
+	/** Detailed overview of what needs to be done */
+	overview: string;
 
-  /** List of functional requirements (user-facing behavior) */
-  functionals: string[];
+	/** List of functional requirements (user-facing behavior) */
+	functionals: string[];
 
-  /** List of non-functional requirements (performance, security, etc.) */
-  nonFunctionals: string[];
+	/** List of non-functional requirements (performance, security, etc.) */
+	nonFunctionals: string[];
 
-  /** List of acceptance criteria (testable outcomes) */
-  acceptanceCriterias: string[];
+	/** List of acceptance criteria (testable outcomes) */
+	acceptanceCriterias: string[];
 
-  /** List of items explicitly out of scope for this plan */
-  outOfScope: string[];
+	/** List of items explicitly out of scope for this plan */
+	outOfScope: string[];
 }
 
 /**
  * A single phase in the implementation plan.
  */
 export interface PhaseInput {
-  /** Phase name (e.g., "Phase 1: Foundation") */
-  phase: string;
+	/** Phase name (e.g., "Phase 1: Foundation") */
+	phase: string;
 
-  /** List of tasks for this phase (will be converted to checkboxes) */
-  tasks: string[];
+	/** List of tasks for this phase (will be converted to checkboxes) */
+	tasks: string[];
 }
 
 /**
@@ -195,11 +195,11 @@ export interface PhaseInput {
  * This replaces free-form markdown to ensure deterministic plan.md generation.
  */
 export interface ImplementationInput {
-  /** High-level description of the implementation strategy */
-  description: string;
+	/** High-level description of the implementation strategy */
+	description: string;
 
-  /** List of phases, each containing tasks */
-  phases: PhaseInput[];
+	/** List of phases, each containing tasks */
+	phases: PhaseInput[];
 }
 
 // ============================================================================
@@ -210,26 +210,26 @@ export interface ImplementationInput {
  * Directory paths for the three plan status folders.
  */
 export interface PlanPaths {
-  /** Root plans directory */
-  root: string;
+	/** Root plans directory */
+	root: string;
 
-  /** Path to pending plans directory */
-  pending: string;
+	/** Path to pending plans directory */
+	pending: string;
 
-  /** Path to in-progress plans directory */
-  in_progress: string;
+	/** Path to in-progress plans directory */
+	in_progress: string;
 
-  /** Path to completed plans directory */
-  done: string;
+	/** Path to completed plans directory */
+	done: string;
 }
 
 /**
  * Result of resolving a plan folder location.
  */
 export interface PlanLocation {
-  /** Full path to the plan folder */
-  path: string;
+	/** Full path to the plan folder */
+	path: string;
 
-  /** Current status/directory of the plan */
-  status: PlanStatus;
+	/** Current status/directory of the plan */
+	status: PlanStatus;
 }

@@ -30,8 +30,8 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-plan-manager@0.2.0"]
+	"$schema": "https://opencode.ai/config.json",
+	"plugin": ["opencode-plan-manager@0.2.0"]
 }
 ```
 
@@ -92,25 +92,25 @@ Instead of loose markdown, agents use structured objects to ensure every plan ha
 
 ```typescript
 plan_create({
-  title: "JWT Authentication",
-  type: "feature",
-  description: "Secure auth flow with refresh tokens",
-  spec: {
-    overview: "Implement secure JWT-based authentication",
-    functionals: ["User login", "Token refresh"],
-    nonFunctionals: ["Passwords hashed with bcrypt"],
-    acceptanceCriterias: ["Successful login returns valid JWT"],
-    outOfScope: ["Social OAuth"],
-  },
-  implementation: {
-    description: "Phased rollout",
-    phases: [
-      {
-        phase: "Phase 1: Database",
-        tasks: ["Create users table", "Create sessions table"],
-      },
-    ],
-  },
+	title: "JWT Authentication",
+	type: "feature",
+	description: "Secure auth flow with refresh tokens",
+	spec: {
+		overview: "Implement secure JWT-based authentication",
+		functionals: ["User login", "Token refresh"],
+		nonFunctionals: ["Passwords hashed with bcrypt"],
+		acceptanceCriterias: ["Successful login returns valid JWT"],
+		outOfScope: ["Social OAuth"],
+	},
+	implementation: {
+		description: "Phased rollout",
+		phases: [
+			{
+				phase: "Phase 1: Database",
+				tasks: ["Create users table", "Create sessions table"],
+			},
+		],
+	},
 });
 ```
 
@@ -135,12 +135,12 @@ Update multiple tasks or move a plan through the lifecycle with validation.
 
 ```typescript
 plan_update({
-  plan_id: "feature_auth",
-  status: "in_progress",
-  taskUpdates: [
-    { content: "Create users table", status: "done" },
-    { content: "Create sessions table", status: "in_progress" },
-  ],
+	plan_id: "feature_auth",
+	status: "in_progress",
+	taskUpdates: [
+		{ content: "Create users table", status: "done" },
+		{ content: "Create sessions table", status: "in_progress" },
+	],
 });
 ```
 

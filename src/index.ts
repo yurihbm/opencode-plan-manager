@@ -17,36 +17,36 @@ const PLUGIN_NAME = "opencode-plan-manager";
  * @returns Plugin instance with tool definitions
  */
 export const OpenPlanManagerPlugin: Plugin = async ({ client }) => {
-  await client.app.log({
-    body: {
-      service: PLUGIN_NAME,
-      level: "info",
-      message: "Plugin initialized",
-    },
-  });
+	await client.app.log({
+		body: {
+			service: PLUGIN_NAME,
+			level: "info",
+			message: "Plugin initialized",
+		},
+	});
 
-  return {
-    name: PLUGIN_NAME,
-    config: async (input) => {
-      if (input.agent?.plan && !input.agent.plan.prompt) {
-        input.agent.plan = {
-          ...input.agent.plan,
-          prompt: PLAN_PROMPT,
-        };
-      }
+	return {
+		name: PLUGIN_NAME,
+		config: async (input) => {
+			if (input.agent?.plan && !input.agent.plan.prompt) {
+				input.agent.plan = {
+					...input.agent.plan,
+					prompt: PLAN_PROMPT,
+				};
+			}
 
-      if (input.agent?.build && !input.agent.build.prompt) {
-        input.agent.build = {
-          ...input.agent.build,
-          prompt: BUILD_PROMPT,
-        };
-      }
-    },
-    tool: {
-      plan_create: planCreate,
-      plan_list: planList,
-      plan_read: planRead,
-      plan_update: planUpdate,
-    },
-  };
+			if (input.agent?.build && !input.agent.build.prompt) {
+				input.agent.build = {
+					...input.agent.build,
+					prompt: BUILD_PROMPT,
+				};
+			}
+		},
+		tool: {
+			plan_create: planCreate,
+			plan_list: planList,
+			plan_read: planRead,
+			plan_update: planUpdate,
+		},
+	};
 };
