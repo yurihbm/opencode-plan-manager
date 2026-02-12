@@ -1,6 +1,6 @@
 {
   "name": "opencode-plan-manager",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A plugin for managing plans in OpenCode.",
   "author": "Yuri Maciel <35900428+yurihbm@users.noreply.github.com>",
   "license": "MIT",
@@ -33,9 +33,9 @@
     "@types/bun": "latest"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.1.51"
+    "@opencode-ai/plugin": "^1.1.59"
   }
 }
