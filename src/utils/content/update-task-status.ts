@@ -32,7 +32,10 @@ export function updateTaskStatus(
 	// Match the task line with any status marker: "- [?] taskContent"
 	// Capture group 1: "- ["
 	// Capture group 2: "] taskContent"
-	const pattern = new RegExp(`(- \\[)[ ~x](\\] ${escapedContent})`);
+	// Ensure it matches until end of line to prevent partial matches (e.g. "Task 1" matching "Task 10")
+	const pattern = new RegExp(
+		`(- \\[)[ ~x](\\] ${escapedContent})(?=$|\\r?\\n)`,
+	);
 
 	if (!pattern.test(content)) {
 		throw new Error(`Task not found: "${taskContent}"`);

@@ -1,4 +1,4 @@
-export { formatDate, generatePlanId, toKebabCase } from "./general";
+export { generatePlanId, toKebabCase } from "./general";
 export { writeMetadata, readMetadata, isValidTransition } from "./metadata";
 export {
 	updateTaskStatus,
