@@ -1,16 +1,4 @@
-/**
- * Generates deterministic plan IDs for plan folders.
- *
- * The plan ID serves as both the unique identifier and the folder name.
- * Format: `{type}_{kebab_title}_{YYYYMMDD}`
- *
- * Examples:
- * - `feature_user-auth_20260206`
- * - `bug_login-crash_20260205`
- * - `refactor_database_20260120`
- */
-
-import { toKebabCase } from "./kebab-case";
+import { toKebabCase } from "./to-kebab-case";
 
 /**
  * Generates a deterministic plan ID from a plan type and title.

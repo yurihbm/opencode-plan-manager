@@ -4,10 +4,10 @@ import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
-import { isValidTransition, UpdatePlanInputBaseSchema } from "../schemas";
+import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
 	generatePlanMarkdown,
-	generateSpecMarkdown,
+	isValidTransition,
 	movePlanFolder,
 	readMetadata,
 	resolvePlanFolder,
@@ -25,21 +25,11 @@ export const planUpdate = tool({
 	args: UpdatePlanInputBaseSchema.shape,
 	async execute(args, context) {
 		try {
-			// Validate: at least one update field must be provided
-			if (
-				args.status === undefined &&
-				args.spec === undefined &&
-				args.plan === undefined &&
-				args.taskUpdates === undefined
-			) {
-				return "Error: At least one of 'status', 'spec', 'plan', or 'taskUpdates' must be provided.";
-			}
-
 			// Resolve plan location
-			const location = await resolvePlanFolder(context.directory, args.plan_id);
+			const location = await resolvePlanFolder(context.directory, args.id);
 
 			if (!location) {
-				return `Plan '${args.plan_id}' not found in any status directory.\n\nUse plan_list to see available plans.`;
+				return `Plan '${args.id}' not found in any status directory.\n\nUse plan_list to see available plans.`;
 			}
 
 			const updateMessages: string[] = [];
@@ -49,12 +39,16 @@ export const planUpdate = tool({
 			// --- Status transition (folder move) ---
 			if (args.status !== undefined && args.status !== currentStatus) {
 				if (!isValidTransition(currentStatus, args.status)) {
-					return `Error: Invalid status transition '${currentStatus}' → '${args.status}'.\n\nAllowed transitions:\n- pending → in_progress\n- in_progress → done\n- in_progress → pending`;
+					return `Error: Invalid status transition '${currentStatus}' → '${args.status}'.
+Allowed transitions:
+  - pending → in_progress
+  - in_progress → done
+	- in_progress → pending`;
 				}
 
 				const newPath = await movePlanFolder(
 					context.directory,
-					args.plan_id,
+					args.id,
 					currentStatus,
 					args.status as PlanStatus,
 				);
@@ -67,22 +61,28 @@ export const planUpdate = tool({
 			}
 
 			// --- Update spec.md ---
-			if (args.spec !== undefined) {
-				const specMarkdown = generateSpecMarkdown(args.spec);
+			if (args.specifications !== undefined) {
+				const specMarkdown = generatePlanMarkdown({
+					specifications: args.specifications,
+				});
 				await Bun.write(join(currentPath, "spec.md"), specMarkdown);
 				updateMessages.push("spec.md updated");
 			}
 
 			// --- Update plan.md ---
-			if (args.plan !== undefined) {
+			if (args.implementation !== undefined) {
 				// Validate duplicate task names
-				const duplicates = validateUniqueTaskNames(args.plan);
+				const duplicates = validateUniqueTaskNames(args.implementation);
 				if (duplicates.length > 0) {
-					return `Error: Duplicate task names found. Task names must be unique across all phases.\n\nDuplicates: ${duplicates.join(", ")}`;
+					return `Error: Duplicate task names found. Task names must be unique across all phases.
+Duplicates: ${duplicates.join(", ")}`;
 				}
 
-				const planMarkdown = generatePlanMarkdown(args.plan);
-				await Bun.write(join(currentPath, "plan.md"), planMarkdown);
+				const implMarkdown = generatePlanMarkdown({
+					implementation: args.implementation,
+				});
+
+				await Bun.write(join(currentPath, "plan.md"), implMarkdown);
 				updateMessages.push("plan.md updated");
 			}
 
@@ -137,7 +137,7 @@ export const planUpdate = tool({
 
 			return `✓ Plan updated successfully!
 
-**Plan ID:** ${args.plan_id}
+**Plan ID:** ${args.id}
 **Status:** ${currentStatus}
 **Updated:** ${updatedMetadata.updated_at}
 

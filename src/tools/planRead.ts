@@ -1,11 +1,15 @@
+import type { PlanContent } from "../types";
+
 import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
-import { PlanViewEnum } from "../schemas";
+import { PlanViewSchema } from "../schemas";
 import {
 	calculateProgress,
-	parseTasks,
+	generatePlanMarkdown,
+	parseImplementation,
+	parseSpecifications,
 	readMetadata,
 	resolvePlanFolder,
 } from "../utils";
@@ -15,61 +19,54 @@ import {
  */
 export const planRead = tool({
 	description:
-		"Read a specific plan's content, metadata, and tasks. Supports selective views to minimize token usage: 'summary' (metadata + progress only), 'spec' (metadata + spec.md), 'plan' (metadata + plan.md + tasks), 'full' (everything).",
+		"Read a specific plan's content, metadata, and tasks. Supports selective views to minimize token usage: 'summary' (metadata + progress only), 'spec' (metadata + spec.md), 'plan' (metadata + plan.md), 'full' (everything).",
 	args: {
-		plan_id: tool.schema
+		id: tool.schema
 			.string()
 			.min(1)
-			.describe("The plan's plan_id (folder name)"),
-		view: PlanViewEnum.optional()
-			.default("full")
-			.describe(
+			.meta({ description: "The plan's ID (folder name)" }),
+		view: PlanViewSchema.optional().default("full").meta({
+			description:
 				"What to return: 'summary' (cheapest), 'spec', 'plan', or 'full' (default)",
-			),
+		}),
 	},
 	async execute(args, context) {
 		try {
-			const location = await resolvePlanFolder(context.directory, args.plan_id);
+			const location = await resolvePlanFolder(context.directory, args.id);
 
 			if (!location) {
-				return `Plan '${args.plan_id}' not found in any status directory.\n\nUse plan_list to see available plans.`;
+				return `Plan '${args.id}' not found in any status directory.
+Use plan_list to see available plans.`;
 			}
 
 			// Always read metadata
 			const metadata = await readMetadata(location.path);
 
-			// Build output sections based on view
-			const sections: string[] = [];
-
-			sections.push(`✓ Plan loaded successfully!`);
-			sections.push(``);
-			sections.push(`**Plan ID:** ${metadata.plan_id}`);
-			sections.push(`**Type:** ${metadata.type}`);
-			sections.push(`**Status:** ${metadata.status}`);
-			sections.push(`**Description:** ${metadata.description}`);
-			sections.push(`**Created:** ${metadata.created_at}`);
-			sections.push(`**Updated:** ${metadata.updated_at}`);
+			const outputPlanContent: PlanContent = {
+				metadata,
+			};
 
 			// Read plan.md for progress stats (needed for summary too)
-			let planContent: string | undefined;
 			if (
 				args.view === "summary" ||
 				args.view === "plan" ||
 				args.view === "full"
 			) {
-				const planFile = Bun.file(join(location.path, "plan.md"));
-				if (await planFile.exists()) {
-					planContent = await planFile.text();
-				}
-			}
+				const implFile = Bun.file(join(location.path, "plan.md"));
+				if (await implFile.exists()) {
+					const implContent = await implFile.text();
 
-			// Calculate and display progress
-			if (planContent !== undefined) {
-				const tasks = parseTasks(planContent);
-				const progress = calculateProgress(tasks);
-				sections.push(
-					`**Progress:** ${progress.done}/${progress.total} tasks done (${progress.percentage}%) | ${progress.in_progress} in progress | ${progress.pending} pending`,
-				);
+					const implementation = parseImplementation(implContent);
+					const tasks = implementation.phases.flatMap((phase) => phase.tasks);
+					const progress = calculateProgress(tasks);
+
+					// Progress is always included if plan.md is read
+					outputPlanContent.progress = progress;
+
+					if (args.view === "plan" || args.view === "full") {
+						outputPlanContent.implementation = implementation;
+					}
+				}
 			}
 
 			// Include spec content
@@ -77,43 +74,12 @@ export const planRead = tool({
 				const specFile = Bun.file(join(location.path, "spec.md"));
 				if (await specFile.exists()) {
 					const specContent = await specFile.text();
-					sections.push(``);
-					sections.push(`---`);
-					sections.push(`## Specification (spec.md)`);
-					sections.push(``);
-					sections.push(specContent);
+					const specifications = parseSpecifications(specContent);
+					outputPlanContent.specifications = specifications;
 				}
 			}
 
-			// Include plan content and tasks
-			if (args.view === "plan" || args.view === "full") {
-				if (planContent !== undefined) {
-					sections.push(``);
-					sections.push(`---`);
-					sections.push(`## Implementation Plan (plan.md)`);
-					sections.push(``);
-					sections.push(planContent);
-
-					// Show parsed tasks summary
-					const tasks = parseTasks(planContent);
-					if (tasks.length > 0) {
-						sections.push(``);
-						sections.push(`---`);
-						sections.push(`**Parsed Tasks (${tasks.length}):**`);
-						for (const t of tasks) {
-							const marker =
-								t.status === "done"
-									? "x"
-									: t.status === "in_progress"
-										? "~"
-										: " ";
-							sections.push(`- [${marker}] ${t.content}`);
-						}
-					}
-				}
-			}
-
-			return sections.join("\n");
+			return generatePlanMarkdown(outputPlanContent);
 		} catch (error) {
 			return `Error reading plan: ${error instanceof Error ? error.message : "Unknown error"}`;
 		}

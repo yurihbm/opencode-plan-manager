@@ -1,27 +1,36 @@
-import type { PlanStatus } from "../types";
+import type { PlanMetadata, PlanStatus } from "../types";
 
 import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
+import { z } from "zod";
 
-import { PlanTypeEnum } from "../schemas";
-import { getPlanPaths, listPlanFolders, readMetadata } from "../utils";
+import { PlanStatusSchema, PlanTypeSchema } from "../schemas";
+import {
+	generateMetadatasTable,
+	getPlanPaths,
+	listPlanFolders,
+	readMetadata,
+} from "../utils";
 
 /**
  * PLAN_LIST: List plans by reading only metadata.json files
  */
 export const planList = tool({
 	description:
-		"List plans with their metadata. Reads only metadata.json files for performance. Defaults to showing pending + in_progress plans. Returns a table with plan_id, description, type, status, progress, and last updated date.",
+		"List plans with their metadata. Reads only metadata.json files for performance. Defaults to showing pending + in_progress plans. Returns a table with id, description, type, status, and last updated date.",
 	args: {
-		status: tool.schema
-			.enum(["pending", "in_progress", "done", "active", "all"])
+		status: z
+			.union([PlanStatusSchema, z.enum(["active", "all"])])
 			.optional()
 			.default("active")
-			.describe(
-				"Filter by plan status. 'active' = pending + in_progress (default). 'all' = everything.",
-			),
-		type: PlanTypeEnum.optional().describe("Optional: filter by plan type"),
+			.meta({
+				description:
+					"Filter by plan status. 'active' = pending + in_progress (default). 'all' = everything.",
+			}),
+		type: PlanTypeSchema.optional().meta({
+			description: "Optional: filter by plan type",
+		}),
 	},
 	async execute(args, context) {
 		try {
@@ -36,21 +45,15 @@ export const planList = tool({
 				statusesToScan.push(args.status as PlanStatus);
 			}
 
-			const results: Array<{
-				plan_id: string;
-				description: string;
-				type: string;
-				status: string;
-				updated_at: string;
-			}> = [];
+			const results: Array<PlanMetadata> = [];
 
 			// Scan each status directory
+			const paths = getPlanPaths(context.directory);
 			for (const status of statusesToScan) {
 				const folders = await listPlanFolders(context.directory, status);
 
 				for (const folderName of folders) {
 					try {
-						const paths = getPlanPaths(context.directory);
 						const folderPath = join(paths[status], folderName);
 						const metadata = await readMetadata(folderPath);
 
@@ -59,15 +62,10 @@ export const planList = tool({
 							continue;
 						}
 
-						results.push({
-							plan_id: metadata.plan_id,
-							description: metadata.description,
-							type: metadata.type,
-							status: metadata.status,
-							updated_at: metadata.updated_at,
-						});
+						results.push(metadata);
 					} catch {
 						// Skip folders with invalid metadata
+						continue;
 					}
 				}
 			}
@@ -79,24 +77,14 @@ export const planList = tool({
 						: args.status === "active"
 							? "active "
 							: `${args.status} `;
-				return `No ${filterDesc}plans found.\n\nTo create a new plan, use the plan_create tool.`;
+				return `No ${filterDesc}plans found.
+To create a new plan, use the plan_create tool.`;
 			}
 
 			// Format results as a table
-			const header = "| Plan ID | Description | Type | Status | Updated |";
-			const separator = "|---------|-------------|------|--------|---------|";
-			const rows = results.map(
-				(r) =>
-					`| ${r.plan_id} | ${r.description} | ${r.type} | ${r.status} | ${r.updated_at} |`,
-			);
+			const table = generateMetadatasTable(results);
 
-			return [
-				`Found ${results.length} plan(s):`,
-				"",
-				header,
-				separator,
-				...rows,
-			].join("\n");
+			return [`Found ${results.length} plan(s):`, "", table].join("\n");
 		} catch (error) {
 			return `Error listing plans: ${error instanceof Error ? error.message : "Unknown error"}`;
 		}

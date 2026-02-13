@@ -10,10 +10,9 @@ import {
 	ensurePlanDirectories,
 	generatePlanId,
 	generatePlanMarkdown,
-	generateSpecMarkdown,
 	getPlanPaths,
-	parseTasks,
 	resolvePlanFolder,
+	validateUniquePhaseNames,
 	validateUniqueTaskNames,
 	writeMetadata,
 } from "../utils";
@@ -23,62 +22,72 @@ import {
  */
 export const planCreate = tool({
 	description:
-		"Create a new implementation plan. Generates a deterministic plan_id from the title and type, then creates a folder in the pending directory with metadata.json, spec.md, and plan.md.",
+		"Create a new implementation plan. Generates a deterministic plan ID from the title and type, then creates a folder in the pending directory with metadata.json, spec.md, and plan.md.",
 	args: CreatePlanInputSchema.shape,
 	async execute(args, context) {
 		try {
 			await ensurePlanDirectories(context.directory);
 			const paths = getPlanPaths(context.directory);
 
-			// Generate deterministic plan_id
-			const planId = generatePlanId(args.type, args.title);
+			// Generate deterministic id
+			let planId = generatePlanId(args.metadata.type, args.metadata.title);
 
 			// Handle duplicate Plan IDs by appending a counter suffix
-			let finalPlanId = planId;
 			let counter = 2;
 			while (
-				await Bun.file(
-					join(paths.pending, finalPlanId, "metadata.json"),
-				).exists()
+				await Bun.file(join(paths.pending, planId, "metadata.json")).exists()
 			) {
-				finalPlanId = `${planId}-${counter}`;
+				planId = `${planId}-${counter}`;
 				counter++;
+				if (counter > 5) {
+					return "Error: Too many plans with similar titles. Please choose a more unique title or check existing plans with plan_list.";
+				}
 			}
 
 			// Also check in_progress and done to avoid cross-status duplicates
 			const existingLocation = await resolvePlanFolder(
 				context.directory,
-				finalPlanId,
+				planId,
 			);
 			if (existingLocation) {
-				return `Error: A plan with plan_id '${finalPlanId}' already exists in '${existingLocation.status}/' directory.\n\nUse plan_list to see existing plans.`;
+				return `Error: A plan with ID '${planId}' already exists in '${existingLocation.status}/' directory.
+Use plan_list to see existing plans.`;
+			}
+
+			const phaseDuplicates = validateUniquePhaseNames(args.implementation);
+			if (phaseDuplicates.length > 0) {
+				return `Error: Duplicate phase names found. Phase names must be unique across the implementation document to ensure reliable updates.
+Duplicates: ${phaseDuplicates.join(", ")}`;
 			}
 
 			// Validate duplicate task names across phases
-			const duplicates = validateUniqueTaskNames(args.implementation);
-			if (duplicates.length > 0) {
-				return `Error: Duplicate task names found. Task names must be unique across all phases to ensure reliable updates.\n\nDuplicates: ${duplicates.join(", ")}`;
+			const taskDuplicates = validateUniqueTaskNames(args.implementation);
+			if (taskDuplicates.length > 0) {
+				return `Error: Duplicate task names found. Task names must be unique across all phases to ensure reliable updates.
+Duplicates: ${taskDuplicates.join(", ")}`;
 			}
 
 			// Create plan folder
-			const folderPath = join(paths.pending, finalPlanId);
+			const folderPath = join(paths.pending, planId);
 			await Bun.write(join(folderPath, ".gitkeep"), "");
 
 			// Build metadata
 			const now = new Date().toISOString();
 			const metadata: PlanMetadata = {
-				plan_id: finalPlanId,
-				type: args.type as PlanType,
+				id: planId,
+				type: args.metadata.type as PlanType,
 				status: "pending",
 				created_at: now,
 				updated_at: now,
-				description: args.description,
+				description: args.metadata.description,
 			};
 
-			// Write all 3 files
-			// Generate markdown from structured input
-			const specMarkdown = generateSpecMarkdown(args.spec);
-			const planMarkdown = generatePlanMarkdown(args.implementation);
+			const specMarkdown = generatePlanMarkdown({
+				specifications: args.specifications,
+			});
+			const planMarkdown = generatePlanMarkdown({
+				implementation: args.implementation,
+			});
 
 			await Promise.all([
 				writeMetadata(folderPath, metadata),
@@ -86,17 +95,16 @@ export const planCreate = tool({
 				Bun.write(join(folderPath, "plan.md"), planMarkdown),
 			]);
 
-			// Calculate initial progress
-			const tasks = parseTasks(planMarkdown);
+			const tasks = args.implementation.phases.flatMap((phase) => phase.tasks);
 			const progress = calculateProgress(tasks);
 
 			return `✓ Plan created successfully!
 
-**Plan ID:** ${finalPlanId}
-**Location:** .opencode/plans/pending/${finalPlanId}/
-**Type:** ${args.type}
+**Plan ID:** ${planId}
+**Location:** .opencode/plans/pending/${planId}/
+**Type:** ${args.metadata.type}
 **Status:** pending
-**Description:** ${args.description}
+**Description:** ${args.metadata.description}
 **Tasks:** ${progress.total} (${progress.percentage}% done)
 
 Files created:
@@ -104,7 +112,7 @@ Files created:
 - \`spec.md\` — Requirements and acceptance criteria
 - \`plan.md\` — Phased implementation tasks
 
-Use \`plan_read\` with plan_id "${finalPlanId}" to load this plan.`;
+Use \`plan_read\` with id "${planId}" to load this plan.`;
 		} catch (error) {
 			return `Error creating plan: ${error instanceof Error ? error.message : "Unknown error"}`;
 		}

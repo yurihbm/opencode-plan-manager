@@ -120,13 +120,13 @@ Agents can request only the information they need, significantly reducing token 
 
 ```typescript
 // Summary View: Just the metadata and progress stats
-plan_read({ plan_id: "feature_auth", view: "summary" });
+plan_read({ id: "feature_auth", view: "summary" });
 
 // Spec View: Just the requirements (useful for the Planner)
-plan_read({ plan_id: "feature_auth", view: "spec" });
+plan_read({ id: "feature_auth", view: "spec" });
 
 // Plan View: Just the task list (useful for the Builder)
-plan_read({ plan_id: "feature_auth", view: "plan" });
+plan_read({ id: "feature_auth", view: "plan" });
 ```
 
 ### 3. Batch Task Updates (`plan_update`)
@@ -135,7 +135,7 @@ Update multiple tasks or move a plan through the lifecycle with validation.
 
 ```typescript
 plan_update({
-	plan_id: "feature_auth",
+	id: "feature_auth",
 	status: "in_progress",
 	taskUpdates: [
 		{ content: "Create users table", status: "done" },
