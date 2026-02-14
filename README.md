@@ -11,6 +11,44 @@ OpenCode Plan Manager is a high-performance, minimalist plugin designed to bridg
 
 ---
 
+<details>
+<summary><strong>⚠️ v0.3.0 Breaking Changes – Read Before Upgrading!</strong></summary>
+
+#### **This release introduces breaking changes that affect file structure, field names, and plan format.**
+
+If you are upgrading from v0.2.x, you MUST migrate all existing plans and metadata for compatibility.
+
+> Tip: AI Agents can still access old plans by reading their files directly (using Bash/list/read tools), then recreate plans in the new format using the latest plugin's API.
+
+**What Changed?**
+
+- **File naming:**
+  - `spec.md` → `specifications.md`
+  - `plan.md` → `implementation.md`
+- **Metadata key:**
+  - `"plan_id"` → `"id"` in `metadata.json`
+- **Markdown structure:**
+  - All `.md` files now require H1 headers:
+    - `# Specifications` at the top of `specifications.md`
+    - `# Implementation Plan` at the top of `implementation.md`
+  - Phases are now indicated using H2 (`##`) headers, not H3.
+  - No more `## Overview/Description` headers—put the summary right after the H1.
+- **Tool arguments:**
+  - All APIs expect updated argument keys (e.g., `id` instead of `plan_id`)
+
+**How to Migrate?**
+
+1. Rename all `spec.md` to `specifications.md` & `plan.md` to `implementation.md` in each plan folder.
+2. Open each `metadata.json` file and rename `plan_id` → `id`.
+3. Update the content of each markdown file to add the correct H1 headers and phase header levels as described above.
+4. Validate your plans by running `plan_list` and `plan_read`.
+
+**Older plans will not load or load with errors until they are migrated to the new format.**
+
+</details>
+
+---
+
 ## 🧠 Why Plan Manager?
 
 In agentic workflows, **Implementation Plans** are the source of truth. However, most implementations suffer from "Token Soup"—where agents are forced to parse massive, unstructured files, leading to hallucinations and lost context.
