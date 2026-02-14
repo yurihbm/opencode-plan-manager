@@ -1,6 +1,8 @@
+export { PluginConfigSchema } from "./config";
 export { CreatePlanInputSchema } from "./create-plan-input";
 export { ImplementationPhaseSchema } from "./implementation-phase";
 export { ImplementationSchema } from "./implementation";
+export { OutputFormatSchema } from "./output-format";
 export { PlanContentSchema } from "./plan-content";
 export { PlanIDSchema } from "./plan-id";
 export { PlanMetadataSchema } from "./plan-metadata";

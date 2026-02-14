@@ -39,6 +39,22 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 
 ---
 
+## ⚙️ Configuration
+
+Configuration files are loaded with the following precedence (highest to lowest):
+
+1. **Local Config:** `<project-root>/.opencode/plan-manager.json` (project-specific settings)
+2. **User Config:** `~/.config/opencode/plan-manager.json` (global user settings)
+3. **Default Config:** Built-in defaults (used when no config files exist)
+
+```json
+{
+	"outputFormat": "markdown" // "markdown" (default), "json" or "toon" (see https://github.com/toon-format/toon)
+}
+```
+
+---
+
 ## 🤖 The Agentic Workflow
 
 This plugin is optimized for a dual-agent hierarchy, utilizing specialized prompts found in `src/prompts/`:

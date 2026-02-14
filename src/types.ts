@@ -4,6 +4,7 @@ import {
 	CreatePlanInputSchema,
 	ImplementationPhaseSchema,
 	ImplementationSchema,
+	OutputFormatSchema,
 	PlanContentSchema,
 	PlanMetadataSchema,
 	PlanProgressSchema,
@@ -12,12 +13,13 @@ import {
 	PlanTaskStatusSchema,
 	PlanTypeSchema,
 	PlanViewSchema,
+	PluginConfigSchema,
 	SpecificationsSchema,
 	UpdatePlanInputBaseSchema,
 } from "./schemas";
 
 // ============================================================================
-// Plan Status & Type
+// Plan Content and Metadata
 // ============================================================================
 
 /**
@@ -100,6 +102,30 @@ export type CreatePlanInput = z.infer<typeof CreatePlanInputSchema>;
  * Interface for plan update arguments.
  */
 export type UpdatePlanInput = z.infer<typeof UpdatePlanInputBaseSchema>;
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+/**
+ * Output format for plan content.
+ *
+ * - `markdown`: Human-readable markdown format (default)
+ * - `json`: Structured JSON format for programmatic use
+ * - `toon`: TOON format for interoperability
+ */
+export type OutputFormat = z.infer<typeof OutputFormatSchema>;
+
+/**
+ * Plugin configuration.
+ *
+ * Can be provided at two levels:
+ * - User config: `~/.config/opencode/plan-manager.json`
+ * - Local config: `<cwd>/.opencode/plan-manager.json`
+ *
+ * Local config takes precedence over user config.
+ */
+export type PluginConfig = z.infer<typeof PluginConfigSchema>;
 
 // ============================================================================
 // Filesystem Paths

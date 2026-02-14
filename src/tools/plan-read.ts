@@ -11,7 +11,8 @@ import {
 import { PlanViewSchema } from "../schemas";
 import {
 	calculateProgress,
-	generatePlanMarkdown,
+	formatPlanOutput,
+	loadConfig,
 	parseImplementation,
 	parseSpecifications,
 	readMetadata,
@@ -35,6 +36,9 @@ export const planRead = tool({
 	},
 	async execute(args, context) {
 		try {
+			// Load configuration
+			const config = await loadConfig(context.directory);
+
 			const location = await resolvePlanFolder(context.directory, args.id);
 
 			if (!location) {
@@ -86,7 +90,8 @@ Use plan_list to see available plans.`;
 				}
 			}
 
-			return generatePlanMarkdown(outputPlanContent);
+			// Format output based on config
+			return formatPlanOutput(outputPlanContent, config.outputFormat);
 		} catch (error) {
 			return `Error reading plan: ${error instanceof Error ? error.message : "Unknown error"}`;
 		}
