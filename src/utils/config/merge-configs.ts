@@ -6,8 +6,8 @@ import { DEFAULT_CONFIG } from "../../constants";
  * Merges configuration from multiple sources with precedence.
  *
  * Precedence (highest to lowest):
- * 1. Local config (cwd/.opencode/plan-manager.json)
- * 2. User config (~/.config/opencode/plan-manager.json)
+ * 1. Local config (cwd/.opencode/<CONFIG_FILE_NAME>)
+ * 2. User config (~/.config/opencode/<CONFIG_FILE_NAME>)
  * 3. Default config (hardcoded defaults)
  *
  * Each level only provides values that are explicitly set.

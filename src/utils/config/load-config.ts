@@ -4,13 +4,15 @@ import { getConfigPaths } from "./get-config-paths";
 import { ERROR_MESSAGES, loadConfigFile } from "./load-config-file";
 import { mergeConfigs } from "./merge-configs";
 
+const configCache = new Map<string, PluginConfig>();
+
 /**
  * Loads and merges configuration from both user and local config files.
  *
  * This is the main entry point for loading configuration.
  * It orchestrates:
- * 1. Loading user config from ~/.config/opencode/plan-manager.json
- * 2. Loading local config from <cwd>/.opencode/plan-manager.json
+ * 1. Loading user config from ~/.config/opencode/<CONFIG_FILE_NAME>
+ * 2. Loading local config from <cwd>/.opencode/<CONFIG_FILE_NAME>
  * 3. Merging with precedence: local > user > default
  * 4. Warning about any errors (but continuing with defaults)
  *
@@ -24,6 +26,10 @@ import { mergeConfigs } from "./merge-configs";
  * ```
  */
 export async function loadConfig(cwd: string): Promise<PluginConfig> {
+	if (configCache.has(cwd)) {
+		return configCache.get(cwd)!;
+	}
+
 	const paths = getConfigPaths(cwd);
 
 	// Load user config
@@ -49,5 +55,20 @@ export async function loadConfig(cwd: string): Promise<PluginConfig> {
 	}
 
 	// Merge with precedence
-	return mergeConfigs(localResult.config ?? {}, userResult.config ?? {});
+	const mergedConfig = mergeConfigs(
+		localResult.config ?? {},
+		userResult.config ?? {},
+	);
+
+	configCache.set(cwd, mergedConfig);
+
+	return mergedConfig;
+}
+
+/**
+ * Clears the configuration cache. Useful for testing or to reload configs
+ * after changes.
+ */
+export function clearConfigCache() {
+	configCache.clear();
 }

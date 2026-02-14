@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
+import { CONFIG_FILE_NAME } from "../../constants";
 import { getConfigPaths } from "./get-config-paths";
-import { loadConfig } from "./load-config";
+import { clearConfigCache, loadConfig } from "./load-config";
 import { loadConfigFile } from "./load-config-file";
 import { mergeConfigs } from "./merge-configs";
 
@@ -15,6 +16,9 @@ describe("loadConfig", () => {
 	let mockLoadConfigFile: ReturnType<typeof mock>;
 	let mockMergeConfigs: ReturnType<typeof mock>;
 
+	const localConfigPath = `/test/project/.opencode/${CONFIG_FILE_NAME}`;
+	const userConfigPath = `/home/user/.config/opencode/${CONFIG_FILE_NAME}`;
+
 	beforeEach(() => {
 		originalConsoleWarn = console.warn;
 		originalGetConfigPaths = getConfigPaths;
@@ -23,8 +27,8 @@ describe("loadConfig", () => {
 
 		console.warn = mock();
 		mockGetConfigPaths = mock(() => ({
-			local: "/test/project/.opencode/plan-manager.json",
-			user: "/home/user/.config/opencode/plan-manager.json",
+			local: localConfigPath,
+			user: userConfigPath,
 		}));
 		mock.module("./get-config-paths", () => ({
 			getConfigPaths: mockGetConfigPaths,
@@ -45,6 +49,7 @@ describe("loadConfig", () => {
 	});
 
 	afterEach(() => {
+		clearConfigCache();
 		console.warn = originalConsoleWarn;
 		mock.module("./get-config-paths", () => ({
 			getConfigPaths: originalGetConfigPaths,
@@ -61,12 +66,8 @@ describe("loadConfig", () => {
 		await loadConfig("cwd");
 
 		expect(mockGetConfigPaths).toHaveBeenCalledWith("cwd");
-		expect(mockLoadConfigFile).toHaveBeenCalledWith(
-			"/home/user/.config/opencode/plan-manager.json",
-		);
-		expect(mockLoadConfigFile).toHaveBeenCalledWith(
-			"/test/project/.opencode/plan-manager.json",
-		);
+		expect(mockLoadConfigFile).toHaveBeenCalledWith(userConfigPath);
+		expect(mockLoadConfigFile).toHaveBeenCalledWith(localConfigPath);
 		expect(mockMergeConfigs).toHaveBeenCalledWith(
 			{ outputFormat: "json" },
 			{ outputFormat: "json" },
@@ -88,5 +89,36 @@ describe("loadConfig", () => {
 		await loadConfig("cwd");
 
 		expect(console.warn).toHaveBeenCalled();
+	});
+
+	test("should return cached config on subsequent calls", async () => {
+		const result1 = await loadConfig("cwd");
+		const result2 = await loadConfig("cwd");
+
+		expect(result1).toEqual(result2);
+		expect(mockGetConfigPaths).toHaveBeenCalledTimes(1);
+		expect(mockLoadConfigFile).toHaveBeenCalledTimes(2); // user + local
+		expect(mockMergeConfigs).toHaveBeenCalledTimes(1);
+	});
+
+	test("should run full process for different cwds", async () => {
+		await loadConfig("cwd");
+		await loadConfig("other-cwd");
+
+		expect(mockGetConfigPaths).toHaveBeenCalledWith("cwd");
+		expect(mockGetConfigPaths).toHaveBeenCalledWith("other-cwd");
+		expect(mockLoadConfigFile).toHaveBeenCalledTimes(4);
+		expect(mockMergeConfigs).toHaveBeenCalledTimes(2);
+	});
+
+	test("should run full process when cache is cleared", async () => {
+		await loadConfig("cwd");
+		clearConfigCache();
+		await loadConfig("cwd");
+
+		expect(mockGetConfigPaths).toHaveBeenCalledWith("cwd");
+		expect(mockGetConfigPaths).toHaveBeenCalledTimes(2);
+		expect(mockLoadConfigFile).toHaveBeenCalledTimes(4);
+		expect(mockMergeConfigs).toHaveBeenCalledTimes(2);
 	});
 });

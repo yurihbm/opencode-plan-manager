@@ -36,7 +36,7 @@ export interface LoadConfigFileResult {
  *
  * @example
  * ```typescript
- * const result = await loadConfigFile("/home/user/.config/opencode/plan-manager.json");
+ * const result = await loadConfigFile("/home/user/.config/opencode/<CONFIG_FILE_NAME>");
  * if (result.success) {
  *   console.log("Config:", result.config);
  * } else {

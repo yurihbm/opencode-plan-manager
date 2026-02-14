@@ -118,12 +118,6 @@ export type OutputFormat = z.infer<typeof OutputFormatSchema>;
 
 /**
  * Plugin configuration.
- *
- * Can be provided at two levels:
- * - User config: `~/.config/opencode/plan-manager.json`
- * - Local config: `<cwd>/.opencode/plan-manager.json`
- *
- * Local config takes precedence over user config.
  */
 export type PluginConfig = z.infer<typeof PluginConfigSchema>;
 
