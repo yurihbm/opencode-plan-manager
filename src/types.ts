@@ -35,7 +35,7 @@ export type PlanStatus = z.infer<typeof PlanStatusSchema>;
 export type PlanType = z.infer<typeof PlanTypeSchema>;
 
 /**
- * Status of an individual task within a plan's `plan.md`.
+ * Status of an individual task within a plan's implementation file.
  *
  * Corresponds to Markdown checkbox markers:
  * - `pending`     → `- [ ]`
@@ -63,14 +63,14 @@ export type PlanMetadata = z.infer<typeof PlanMetadataSchema>;
 export type PlanProgress = z.infer<typeof PlanProgressSchema>;
 
 /**
- * A task extracted from a plan's `plan.md` content.
+ * A task extracted from a plan's implementation content.
  *
  * Tasks are identified by checkbox syntax: `- [ ]`, `- [~]`, or `- [x]`.
  */
 export type PlanTask = z.infer<typeof PlanTaskSchema>;
 
 /**
- * Structured phases from the implementation plan, parsed from `plan.md`.
+ * Structured phases from the plan's implementation document.
  * */
 export type ImplementationPhase = z.infer<typeof ImplementationPhaseSchema>;
 
@@ -80,7 +80,7 @@ export type ImplementationPhase = z.infer<typeof ImplementationPhaseSchema>;
 export type Implementation = z.infer<typeof ImplementationSchema>;
 
 /**
- * Structured content of plan specifications, parsed from `spec.md`.
+ * Structured content of plan specifications, parsed from specifications file.
  * Contains functional and non-functional requirements, acceptance criteria
  * and out of scope items.
  */

@@ -5,6 +5,10 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
+import {
+	IMPLEMENTATION_FILE_NAME,
+	SPECIFICATIONS_FILE_NAME,
+} from "../src/constants";
 import { planCreate } from "../src/tools/plan-create";
 import { planUpdate } from "../src/tools/plan-update";
 import { createTestContext } from "./setup";
@@ -162,7 +166,7 @@ describe("plan_update", () => {
 			"plans",
 			"pending",
 			planId,
-			"plan.md",
+			IMPLEMENTATION_FILE_NAME,
 		); // Still in pending
 		const content = await fs.readFile(planPath, "utf-8");
 
@@ -170,7 +174,7 @@ describe("plan_update", () => {
 		expect(content).toContain("- [ ] Task 2");
 	});
 
-	test("updates implementation content (replaces plan.md)", async () => {
+	test("updates implementation content (replaces implementation file)", async () => {
 		const newImpl = {
 			description: "New Description",
 			phases: [
@@ -189,7 +193,7 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain("plan.md updated");
+		expect(result).toContain(`${IMPLEMENTATION_FILE_NAME} updated`);
 
 		const fs = await import("node:fs/promises");
 		const planPath = join(
@@ -198,7 +202,7 @@ describe("plan_update", () => {
 			"plans",
 			"pending",
 			planId,
-			"plan.md",
+			IMPLEMENTATION_FILE_NAME,
 		);
 		const content = await fs.readFile(planPath, "utf-8");
 
@@ -208,7 +212,7 @@ describe("plan_update", () => {
 		expect(content).not.toContain("Initial description");
 	});
 
-	test("updates specifications (replaces spec.md)", async () => {
+	test("updates specifications (replaces specifications file)", async () => {
 		const newSpec = {
 			description: "New Spec Overview",
 			functionals: ["New Func"],
@@ -225,7 +229,7 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain("spec.md updated");
+		expect(result).toContain(`${SPECIFICATIONS_FILE_NAME} updated`);
 
 		const fs = await import("node:fs/promises");
 		const specPath = join(
@@ -234,7 +238,7 @@ describe("plan_update", () => {
 			"plans",
 			"pending",
 			planId,
-			"spec.md",
+			SPECIFICATIONS_FILE_NAME,
 		);
 		const content = await fs.readFile(specPath, "utf-8");
 
@@ -257,15 +261,15 @@ describe("plan_update", () => {
 		expect(result).toContain('Task "Task 1" → in_progress');
 
 		const fs = await import("node:fs/promises");
-		const planPath = join(
+		const implPath = join(
 			ctx.directory,
 			".opencode",
 			"plans",
 			"in_progress",
 			planId,
-			"plan.md",
+			IMPLEMENTATION_FILE_NAME,
 		);
-		const content = await fs.readFile(planPath, "utf-8");
+		const content = await fs.readFile(implPath, "utf-8");
 
 		expect(content).toContain("- [~] Task 1");
 	});

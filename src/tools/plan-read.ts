@@ -4,6 +4,10 @@ import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
+import {
+	IMPLEMENTATION_FILE_NAME,
+	SPECIFICATIONS_FILE_NAME,
+} from "../constants";
 import { PlanViewSchema } from "../schemas";
 import {
 	calculateProgress,
@@ -18,8 +22,7 @@ import {
  * PLAN_READ: Read a plan with selective views
  */
 export const planRead = tool({
-	description:
-		"Read a specific plan's content, metadata, and tasks. Supports selective views to minimize token usage: 'summary' (metadata + progress only), 'spec' (metadata + spec.md), 'plan' (metadata + plan.md), 'full' (everything).",
+	description: `Read a specific plan's content, metadata, and tasks. Supports selective views to minimize token usage: 'summary' (metadata + progress only), 'spec' (metadata + ${SPECIFICATIONS_FILE_NAME}), 'plan' (metadata + ${IMPLEMENTATION_FILE_NAME}), 'full' (everything).`,
 	args: {
 		id: tool.schema
 			.string()
@@ -46,13 +49,15 @@ Use plan_list to see available plans.`;
 				metadata,
 			};
 
-			// Read plan.md for progress stats (needed for summary too)
+			// Read implementation file for progress stats (needed for summary too)
 			if (
 				args.view === "summary" ||
 				args.view === "plan" ||
 				args.view === "full"
 			) {
-				const implFile = Bun.file(join(location.path, "plan.md"));
+				const implFile = Bun.file(
+					join(location.path, IMPLEMENTATION_FILE_NAME),
+				);
 				if (await implFile.exists()) {
 					const implContent = await implFile.text();
 
@@ -60,7 +65,7 @@ Use plan_list to see available plans.`;
 					const tasks = implementation.phases.flatMap((phase) => phase.tasks);
 					const progress = calculateProgress(tasks);
 
-					// Progress is always included if plan.md is read
+					// Progress is always included if implementation is read
 					outputPlanContent.progress = progress;
 
 					if (args.view === "plan" || args.view === "full") {
@@ -71,7 +76,9 @@ Use plan_list to see available plans.`;
 
 			// Include spec content
 			if (args.view === "spec" || args.view === "full") {
-				const specFile = Bun.file(join(location.path, "spec.md"));
+				const specFile = Bun.file(
+					join(location.path, SPECIFICATIONS_FILE_NAME),
+				);
 				if (await specFile.exists()) {
 					const specContent = await specFile.text();
 					const specifications = parseSpecifications(specContent);

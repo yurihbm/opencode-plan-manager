@@ -4,6 +4,10 @@ import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
+import {
+	IMPLEMENTATION_FILE_NAME,
+	SPECIFICATIONS_FILE_NAME,
+} from "../constants";
 import { CreatePlanInputSchema } from "../schemas";
 import {
 	calculateProgress,
@@ -21,8 +25,7 @@ import {
  * PLAN_CREATE: Create a new folder-per-plan in pending/
  */
 export const planCreate = tool({
-	description:
-		"Create a new implementation plan. Generates a deterministic plan ID from the title and type, then creates a folder in the pending directory with metadata.json, spec.md, and plan.md.",
+	description: `Create a new plan. Generates a deterministic plan ID from the title and type, then creates a folder in the pending directory with metadata.json, ${SPECIFICATIONS_FILE_NAME}, and ${IMPLEMENTATION_FILE_NAME}.`,
 	args: CreatePlanInputSchema.shape,
 	async execute(args, context) {
 		try {
@@ -91,8 +94,8 @@ Duplicates: ${taskDuplicates.join(", ")}`;
 
 			await Promise.all([
 				writeMetadata(folderPath, metadata),
-				Bun.write(join(folderPath, "spec.md"), specMarkdown),
-				Bun.write(join(folderPath, "plan.md"), planMarkdown),
+				Bun.write(join(folderPath, SPECIFICATIONS_FILE_NAME), specMarkdown),
+				Bun.write(join(folderPath, IMPLEMENTATION_FILE_NAME), planMarkdown),
 			]);
 
 			const tasks = args.implementation.phases.flatMap((phase) => phase.tasks);
@@ -109,8 +112,8 @@ Duplicates: ${taskDuplicates.join(", ")}`;
 
 Files created:
 - \`metadata.json\` — Plan identity and state
-- \`spec.md\` — Requirements and acceptance criteria
-- \`plan.md\` — Phased implementation tasks
+- \`${SPECIFICATIONS_FILE_NAME}\` — Requirements, acceptance criteria and out-of-scope details
+- \`${IMPLEMENTATION_FILE_NAME}\` — Phased implementation tasks
 
 Use \`plan_read\` with id "${planId}" to load this plan.`;
 		} catch (error) {

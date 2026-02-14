@@ -76,8 +76,8 @@ Plan Manager organizes work into a structured directory tree that both humans an
 ├── pending/             # New ideas and upcoming features
 │   └── feature_auth/    # Each plan is a dedicated folder
 │       ├── metadata.json
-│       ├── spec.md
-│       └── plan.md
+│       ├── specifications.md
+│       └── implementation.md
 ├── in_progress/         # Currently active development
 └── done/                # Immutable history of completed work
 ```

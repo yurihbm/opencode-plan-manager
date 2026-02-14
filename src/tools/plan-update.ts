@@ -4,6 +4,10 @@ import { join } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
+import {
+	IMPLEMENTATION_FILE_NAME,
+	SPECIFICATIONS_FILE_NAME,
+} from "../constants";
 import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
 	generatePlanMarkdown,
@@ -20,8 +24,7 @@ import {
  * PLAN_UPDATE: Update status, content, or tasks
  */
 export const planUpdate = tool({
-	description:
-		"Update a plan's status, content, or tasks. Supports: changing status (moves folder between pending/in_progress/done), replacing spec.md or plan.md content, and toggling individual task statuses. Auto-updates the updated_at timestamp.",
+	description: `Update a plan's status, content, or tasks. Supports: changing status (moves folder between pending/in_progress/done), replacing ${SPECIFICATIONS_FILE_NAME} or ${IMPLEMENTATION_FILE_NAME} content, and toggling individual task statuses. Auto-updates the updated_at timestamp.`,
 	args: UpdatePlanInputBaseSchema.shape,
 	async execute(args, context) {
 		try {
@@ -60,16 +63,17 @@ Allowed transitions:
 				);
 			}
 
-			// --- Update spec.md ---
 			if (args.specifications !== undefined) {
 				const specMarkdown = generatePlanMarkdown({
 					specifications: args.specifications,
 				});
-				await Bun.write(join(currentPath, "spec.md"), specMarkdown);
-				updateMessages.push("spec.md updated");
+				await Bun.write(
+					join(currentPath, SPECIFICATIONS_FILE_NAME),
+					specMarkdown,
+				);
+				updateMessages.push(`${SPECIFICATIONS_FILE_NAME} updated`);
 			}
 
-			// --- Update plan.md ---
 			if (args.implementation !== undefined) {
 				// Validate duplicate task names
 				const duplicates = validateUniqueTaskNames(args.implementation);
@@ -82,17 +86,20 @@ Duplicates: ${duplicates.join(", ")}`;
 					implementation: args.implementation,
 				});
 
-				await Bun.write(join(currentPath, "plan.md"), implMarkdown);
-				updateMessages.push("plan.md updated");
+				await Bun.write(
+					join(currentPath, IMPLEMENTATION_FILE_NAME),
+					implMarkdown,
+				);
+				updateMessages.push(`${IMPLEMENTATION_FILE_NAME} updated`);
 			}
 
 			// --- Batch Update Tasks ---
 			if (args.taskUpdates && args.taskUpdates.length > 0) {
-				const planFilePath = join(currentPath, "plan.md");
+				const planFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 				const planFile = Bun.file(planFilePath);
 
 				if (!(await planFile.exists())) {
-					return "Error: plan.md not found. Cannot update tasks without a plan file.";
+					return `Error: ${IMPLEMENTATION_FILE_NAME} not found. Cannot update tasks without a plan file.`;
 				}
 
 				let planContent = await planFile.text();

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Schema for progress statistics of a plan, calculated from tasks in `plan.md`.
+ * Schema for progress statistics of a plan, calculated from tasks in `implementation file`.
  */
 export const PlanProgressSchema = z
 	.object({

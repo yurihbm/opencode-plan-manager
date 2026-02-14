@@ -6,6 +6,10 @@ import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
+import {
+	IMPLEMENTATION_FILE_NAME,
+	SPECIFICATIONS_FILE_NAME,
+} from "../src/constants";
 import { planCreate } from "../src/tools/plan-create";
 import { createTestContext } from "./setup";
 
@@ -74,8 +78,8 @@ describe("plan_create", () => {
 
 		// Check required files
 		expect(existsSync(join(planPath, "metadata.json"))).toBe(true);
-		expect(existsSync(join(planPath, "spec.md"))).toBe(true);
-		expect(existsSync(join(planPath, "plan.md"))).toBe(true);
+		expect(existsSync(join(planPath, SPECIFICATIONS_FILE_NAME))).toBe(true);
+		expect(existsSync(join(planPath, IMPLEMENTATION_FILE_NAME))).toBe(true);
 
 		// Verify metadata content
 		const metadata = JSON.parse(
@@ -87,15 +91,21 @@ describe("plan_create", () => {
 			description: "A test plan description",
 		});
 
-		// Verify plan.md content
-		const planMd = readFileSync(join(planPath, "plan.md"), "utf-8");
-		expect(planMd).toContain("# Implementation Plan");
-		expect(planMd).toContain("## Phase 1");
-		expect(planMd).toContain("- [ ] Task 1");
-		expect(planMd).toContain("- [ ] Task 2");
+		// Verify IMPLEMENTATION_FILE_NAME content
+		const implMd = readFileSync(
+			join(planPath, IMPLEMENTATION_FILE_NAME),
+			"utf-8",
+		);
+		expect(implMd).toContain("# Implementation Plan");
+		expect(implMd).toContain("## Phase 1");
+		expect(implMd).toContain("- [ ] Task 1");
+		expect(implMd).toContain("- [ ] Task 2");
 
-		// Verify spec.md content
-		const specMd = readFileSync(join(planPath, "spec.md"), "utf-8");
+		// Verify SPECIFICATIONS_FILE_NAME content
+		const specMd = readFileSync(
+			join(planPath, SPECIFICATIONS_FILE_NAME),
+			"utf-8",
+		);
 		expect(specMd).toContain("# Specifications");
 		expect(specMd).toContain("Spec overview");
 		// The overview doesn't have a "## Overview" header in the output, it's just the content

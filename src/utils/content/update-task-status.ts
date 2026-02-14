@@ -3,15 +3,15 @@ import type { PlanTaskStatus } from "../../types";
 import { STATUS_TO_MARKER } from "./constants";
 
 /**
- * Updates a specific task's status in plan.md content.
+ * Updates a specific task's status in implementation file content.
  *
  * Uses exact string matching to find the task, then replaces the
  * checkbox marker with the new status.
  *
- * @param content - The full plan.md content
+ * @param content - The full implementation file content
  * @param taskContent - The exact task text to match (without checkbox prefix)
  * @param newStatus - The new status to set
- * @returns Updated plan.md content
+ * @returns Updated implementation file content
  * @throws {Error} If the task content is not found
  *
  * @example
