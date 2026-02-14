@@ -47,7 +47,8 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@opencode-ai/plugin": "^1.1.59"
+		"@opencode-ai/plugin": "^1.1.59",
+		"@toon-format/toon": "^2.1.0"
 	},
 	"lint-staged": {
 		"*.ts": [

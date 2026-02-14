@@ -4,12 +4,12 @@ import { STATUS_TO_MARKER } from "./constants";
 
 /**
  * Generates a markdown string representing the plan content, including metadata,
- * progress, specifications, and implementation details.
+ * progress, specifications and implementation details.
  *
  * Undefined sections will be skipped, allowing for partial content to be rendered
  * as needed.
  *
- * @param content - Partial plan content containing metadata, progress, specifications, and implementation details
+ * @param content - Partial plan content
  *
  * @returns Markdown string representing the plan content
  */
