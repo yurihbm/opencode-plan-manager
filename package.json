@@ -1,6 +1,6 @@
 {
 	"name": "opencode-plan-manager",
-	"version": "0.2.1",
+	"version": "0.3.0",
 	"description": "A plugin for managing plans in OpenCode.",
 	"author": "Yuri Maciel <35900428+yurihbm@users.noreply.github.com>",
 	"license": "MIT",
@@ -32,6 +32,7 @@
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@ianvs/prettier-plugin-sort-imports": "^4.7.1",
 		"@types/bun": "latest",
 		"eslint": "^10.0.0",
 		"eslint-config-prettier": "^10.1.8",
@@ -46,7 +47,8 @@
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@opencode-ai/plugin": "^1.1.59"
+		"@opencode-ai/plugin": "^1.1.59",
+		"@toon-format/toon": "^2.1.0"
 	},
 	"lint-staged": {
 		"*.ts": [

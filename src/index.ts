@@ -1,6 +1,7 @@
 import type { Plugin } from "@opencode-ai/plugin";
-import PLAN_PROMPT from "./prompts/plan.txt";
+
 import BUILD_PROMPT from "./prompts/build.txt";
+import PLAN_PROMPT from "./prompts/plan.txt";
 import { planCreate, planList, planRead, planUpdate } from "./tools";
 
 const PLUGIN_NAME = "opencode-plan-manager";

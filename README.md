@@ -11,6 +11,44 @@ OpenCode Plan Manager is a high-performance, minimalist plugin designed to bridg
 
 ---
 
+<details>
+<summary><strong>⚠️ v0.3.0 Breaking Changes – Read Before Upgrading!</strong></summary>
+
+#### **This release introduces breaking changes that affect file structure, field names, and plan format.**
+
+If you are upgrading from v0.2.x, you MUST migrate all existing plans and metadata for compatibility.
+
+> Tip: AI Agents can still access old plans by reading their files directly (using Bash/list/read tools), then recreate plans in the new format using the latest plugin's API.
+
+**What Changed?**
+
+- **File naming:**
+  - `spec.md` → `specifications.md`
+  - `plan.md` → `implementation.md`
+- **Metadata key:**
+  - `"plan_id"` → `"id"` in `metadata.json`
+- **Markdown structure:**
+  - All `.md` files now require H1 headers:
+    - `# Specifications` at the top of `specifications.md`
+    - `# Implementation Plan` at the top of `implementation.md`
+  - Phases are now indicated using H2 (`##`) headers, not H3.
+  - No more `## Overview/Description` headers—put the summary right after the H1.
+- **Tool arguments:**
+  - All APIs expect updated argument keys (e.g., `id` instead of `plan_id`)
+
+**How to Migrate?**
+
+1. Rename all `spec.md` to `specifications.md` & `plan.md` to `implementation.md` in each plan folder.
+2. Open each `metadata.json` file and rename `plan_id` → `id`.
+3. Update the content of each markdown file to add the correct H1 headers and phase header levels as described above.
+4. Validate your plans by running `plan_list` and `plan_read`.
+
+**Older plans will not load or load with errors until they are migrated to the new format.**
+
+</details>
+
+---
+
 ## 🧠 Why Plan Manager?
 
 In agentic workflows, **Implementation Plans** are the source of truth. However, most implementations suffer from "Token Soup"—where agents are forced to parse massive, unstructured files, leading to hallucinations and lost context.
@@ -36,6 +74,22 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 ```
 
 > ⚠️ By specifying the version, you improve OpenCode startup time.
+
+---
+
+## ⚙️ Configuration
+
+Configuration files are loaded with the following precedence (highest to lowest):
+
+1. **Local Config:** `<project-root>/.opencode/plan-manager.json` (project-specific settings)
+2. **User Config:** `~/.config/opencode/plan-manager.json` (global user settings)
+3. **Default Config:** Built-in defaults (used when no config files exist)
+
+```json
+{
+	"outputFormat": "markdown" // "markdown" (default), "json" or "toon" (see https://github.com/toon-format/toon)
+}
+```
 
 ---
 
@@ -76,8 +130,8 @@ Plan Manager organizes work into a structured directory tree that both humans an
 ├── pending/             # New ideas and upcoming features
 │   └── feature_auth/    # Each plan is a dedicated folder
 │       ├── metadata.json
-│       ├── spec.md
-│       └── plan.md
+│       ├── specifications.md
+│       └── implementation.md
 ├── in_progress/         # Currently active development
 └── done/                # Immutable history of completed work
 ```
@@ -120,13 +174,13 @@ Agents can request only the information they need, significantly reducing token 
 
 ```typescript
 // Summary View: Just the metadata and progress stats
-plan_read({ plan_id: "feature_auth", view: "summary" });
+plan_read({ id: "feature_auth", view: "summary" });
 
 // Spec View: Just the requirements (useful for the Planner)
-plan_read({ plan_id: "feature_auth", view: "spec" });
+plan_read({ id: "feature_auth", view: "spec" });
 
 // Plan View: Just the task list (useful for the Builder)
-plan_read({ plan_id: "feature_auth", view: "plan" });
+plan_read({ id: "feature_auth", view: "plan" });
 ```
 
 ### 3. Batch Task Updates (`plan_update`)
@@ -135,7 +189,7 @@ Update multiple tasks or move a plan through the lifecycle with validation.
 
 ```typescript
 plan_update({
-	plan_id: "feature_auth",
+	id: "feature_auth",
 	status: "in_progress",
 	taskUpdates: [
 		{ content: "Create users table", status: "done" },
