@@ -40,7 +40,7 @@ describe("plan_create", () => {
 				],
 			},
 			specifications: {
-				overview: "Spec overview",
+				description: "Spec overview",
 				functionals: ["Func 1"],
 				nonFunctionals: ["Non-func 1"],
 				acceptanceCriterias: ["AC 1"],
@@ -114,7 +114,7 @@ describe("plan_create", () => {
 				phases: [{ name: "P1", tasks: [{ content: "T1", status: "pending" }] }],
 			},
 			specifications: {
-				overview: "Spec",
+				description: "Spec",
 				functionals: [],
 				nonFunctionals: [],
 				acceptanceCriterias: [],
@@ -161,7 +161,7 @@ describe("plan_create", () => {
 				],
 			},
 			specifications: {
-				overview: "Spec",
+				description: "Spec",
 				functionals: [],
 				nonFunctionals: [],
 				acceptanceCriterias: [],

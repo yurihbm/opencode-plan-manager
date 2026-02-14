@@ -35,7 +35,7 @@ describe("plan_update", () => {
 				],
 			},
 			specifications: {
-				overview: "Initial Spec",
+				description: "Initial Spec",
 				functionals: [],
 				nonFunctionals: [],
 				acceptanceCriterias: [],
@@ -210,7 +210,7 @@ describe("plan_update", () => {
 
 	test("updates specifications (replaces spec.md)", async () => {
 		const newSpec = {
-			overview: "New Spec Overview",
+			description: "New Spec Overview",
 			functionals: ["New Func"],
 			nonFunctionals: [],
 			acceptanceCriterias: [],

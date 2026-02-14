@@ -23,7 +23,7 @@ describe("generatePlanMarkdown", () => {
 	};
 
 	const mockSpecs = {
-		overview: "Test Overview",
+		description: "Test Overview",
 		functionals: ["Func 1", "Func 2"],
 		nonFunctionals: ["Non-Func 1"],
 		acceptanceCriterias: ["AC 1"],
@@ -108,7 +108,7 @@ describe("generatePlanMarkdown", () => {
 		const content: Partial<PlanContent> = {
 			metadata: mockMetadata,
 			specifications: {
-				overview: "Overview",
+				description: "Overview",
 				functionals: [],
 				nonFunctionals: [],
 				acceptanceCriterias: [],

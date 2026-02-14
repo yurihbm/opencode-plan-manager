@@ -41,7 +41,7 @@ describe("plan_list", () => {
 				],
 			},
 			specifications: {
-				overview: "Spec",
+				description: "Spec",
 				functionals: ["Func 1"],
 				nonFunctionals: ["Non-func 1"],
 				acceptanceCriterias: ["AC 1"],

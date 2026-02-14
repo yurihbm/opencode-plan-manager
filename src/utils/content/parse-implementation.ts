@@ -51,9 +51,7 @@ function parseTasks(content: string): PlanTask[] {
 }
 
 export function parseImplementation(content: string): Implementation {
-	const DESCRIPTION_REGEX =
-		/^# Implementation Plan\s*\n([\s\S]+?)(?=\n## |\n$)/m;
-	// Use a regex that handles newlines and EOF correctly without the 'm' flag's $ ambiguity
+	const DESCRIPTION_REGEX = /^# [^\n]+\n([\s\S]+?)(?=\n## |\n$)/m;
 	const PHASE_REGEX = /(?:^|\n)## (.+?)(?:\n|$)([\s\S]+?)(?=\n## |$)/g;
 
 	const descriptionMatch = content.match(DESCRIPTION_REGEX);

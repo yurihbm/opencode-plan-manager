@@ -23,7 +23,7 @@ describe("generate-plan-toon", () => {
 	};
 
 	const mockSpecs = {
-		overview: "Test Overview",
+		description: "Test Overview",
 		functionals: ["Func 1", "Func 2"],
 		nonFunctionals: ["Non-Func 1"],
 		acceptanceCriterias: ["AC 1"],

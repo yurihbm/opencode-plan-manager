@@ -28,7 +28,7 @@ Overview text.
 
 		const result = parseSpecifications(markdown);
 
-		expect(result.overview).toBe("Overview text.");
+		expect(result.description).toBe("Overview text.");
 		expect(result.functionals).toEqual(["Func 1", "Func 2"]);
 		expect(result.nonFunctionals).toEqual(["Non-Func 1"]);
 		expect(result.acceptanceCriterias).toEqual(["AC 1"]);
@@ -47,7 +47,7 @@ Overview text.
 
 		const result = parseSpecifications(markdown);
 
-		expect(result.overview).toBe("Overview text.");
+		expect(result.description).toBe("Overview text.");
 		expect(result.functionals).toEqual(["Func 1"]);
 		expect(result.nonFunctionals).toEqual([]);
 		expect(result.acceptanceCriterias).toEqual([]);
@@ -78,7 +78,7 @@ Line 2
 
 		const result = parseSpecifications(markdown);
 
-		expect(result.overview).toBe("Line 1\nLine 2");
+		expect(result.description).toBe("Line 1\nLine 2");
 	});
 
 	test("ignores extra headers", () => {
@@ -97,7 +97,7 @@ Overview.
 
 		const result = parseSpecifications(markdown);
 
-		expect(result.overview).toBe("Overview.");
+		expect(result.description).toBe("Overview.");
 		expect(result.functionals).toEqual(["Func 1"]);
 	});
 });

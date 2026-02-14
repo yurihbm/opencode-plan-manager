@@ -5,10 +5,10 @@ import { z } from "zod";
  */
 export const SpecificationsSchema = z
 	.object({
-		overview: z
+		description: z
 			.string()
-			.min(10, "Overview must be at least 10 characters")
-			.meta({ description: "Detailed overview of what needs to be done" }),
+			.min(10, "Description must be at least 10 characters")
+			.meta({ description: "Detailed description of what needs to be done" }),
 		functionals: z
 			.array(
 				z

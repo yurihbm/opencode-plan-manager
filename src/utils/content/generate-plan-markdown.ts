@@ -40,7 +40,7 @@ export function generatePlanMarkdown(content: Partial<PlanContent>): string {
 
 		sections.push(`# Specifications`);
 		sections.push(``);
-		sections.push(content.specifications.overview);
+		sections.push(content.specifications.description);
 
 		if (content.specifications.functionals.length > 0) {
 			sections.push(``);

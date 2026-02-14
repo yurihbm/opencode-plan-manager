@@ -11,7 +11,7 @@ function getSpecSectionItems(content: string, regex: RegExp) {
 }
 
 export function parseSpecifications(content: string): Specifications {
-	const OVERVIEW_REGEX = /^# Specifications[^\n]*(?:\n|$)([\s\S]+?)(?=\n## |$)/;
+	const DESCRIPTION_REGEX = /^# [^\n]+\n([\s\S]+?)(?=\n## |\n$)/m;
 	const FUNCTIONAL_REGEX =
 		/(?:^|\n)## Functional Requirements[^\n]*(?:\n|$)([\s\S]+?)(?=\n## |$)/g;
 	const NON_FUNCTIONAL_REGEX =
@@ -21,8 +21,8 @@ export function parseSpecifications(content: string): Specifications {
 	const OUT_OF_SCOPE_REGEX =
 		/(?:^|\n)## Out of Scope[^\n]*(?:\n|$)([\s\S]+?)(?=\n#{2,3} |$)/g;
 
-	const overviewMatch = content.match(OVERVIEW_REGEX);
-	const overview = overviewMatch?.[1]?.trim() ?? "";
+	const descriptionMatch = content.match(DESCRIPTION_REGEX);
+	const description = descriptionMatch?.[1]?.trim() ?? "";
 
 	const functionals = getSpecSectionItems(content, FUNCTIONAL_REGEX);
 	const nonFunctionals = getSpecSectionItems(content, NON_FUNCTIONAL_REGEX);
@@ -30,7 +30,7 @@ export function parseSpecifications(content: string): Specifications {
 	const outOfScope = getSpecSectionItems(content, OUT_OF_SCOPE_REGEX);
 
 	return {
-		overview,
+		description,
 		functionals,
 		nonFunctionals,
 		acceptanceCriterias,
