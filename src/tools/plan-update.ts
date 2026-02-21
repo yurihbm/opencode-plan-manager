@@ -11,6 +11,7 @@ import {
 } from "../constants";
 import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
+	askPlanEdit,
 	buildToolOutput,
 	generatePlanMarkdown,
 	isValidTransition,
@@ -169,75 +170,38 @@ export const planUpdate = tool({
 				if (willChangeImpl) patterns.push(implRelPath);
 
 				let totalDiff: string;
-				let filepathLabel: string;
-
 				if (willChangeSpec && willChangeImpl) {
 					// Virtual combined file: current and new states side by side
 					const currentCombined =
 						currentSpecContent + "\n\n---\n\n" + currentImplContent;
 					const newCombined = newSpecContent + "\n\n---\n\n" + newImplContent;
 					totalDiff = createPatch(args.id, currentCombined, newCombined);
-					filepathLabel = `${args.id}: ${SPECIFICATIONS_FILE_NAME} & ${IMPLEMENTATION_FILE_NAME}`;
 				} else if (willChangeSpec) {
 					totalDiff = createPatch(
 						specRelPath,
 						currentSpecContent,
 						newSpecContent,
 					);
-					filepathLabel = `${args.id}: ${SPECIFICATIONS_FILE_NAME}`;
 				} else {
 					totalDiff = createPatch(
 						implRelPath,
 						currentImplContent,
 						newImplContent,
 					);
-					filepathLabel = `${args.id}: ${IMPLEMENTATION_FILE_NAME}`;
 				}
 
-				// Ask user for confirmation before writing
-				let rejectReason: "user" | "config" | null = null;
-				try {
-					await context.ask({
-						permission: "edit",
-						patterns,
-						always: [".opencode/plans/*"],
-						metadata: {
-							filepath: filepathLabel,
-							diff: totalDiff,
-						},
-					});
-				} catch (error) {
-					// These are workarounds to classify the reason for rejection since error
-					// types are not provided to OpenCode plugins at this time.
+				const askOutput = await askPlanEdit({
+					planId: args.id,
+					relPath: {
+						specifications: specRelPath,
+						implementation: implRelPath,
+					},
+					diff: totalDiff,
+					context,
+				});
 
-					// 1. Check if it's a DeniedError (Config-based)
-					if (error && typeof error === "object" && "ruleset" in error) {
-						rejectReason = "config";
-					}
-					// 2. Otherwise treat it as a User-based rejection
-					else {
-						rejectReason = "user";
-					}
-				}
-
-				if (rejectReason === "config") {
-					return buildToolOutput({
-						type: "error",
-						text: [
-							"Plan update was BLOCKED by a security policy in the user's configuration.",
-							"NEXT STEP: Inform the user that Plan Agent should be able to perform edits on `.opencode/plans/*`.",
-						],
-					});
-				}
-
-				if (rejectReason === "user") {
-					return buildToolOutput({
-						type: "warning",
-						text: [
-							"Plan update cancelled by user.",
-							"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying to update again.",
-						],
-					});
+				if (askOutput.rejected) {
+					return askOutput.toolOutput;
 				}
 
 				// Write files, restoring originals on failure

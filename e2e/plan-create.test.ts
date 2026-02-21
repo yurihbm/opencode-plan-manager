@@ -244,14 +244,14 @@ describe("plan_create", () => {
 
 			const result = await planCreate.execute(input, userRejectCtx.context);
 
-			expect(result).toContain("Plan creation cancelled by user");
+			expect(result).toContain("Operation cancelled by user");
 
 			// Verify buildToolOutput was called with warning type
 			expect(mockBuildToolOutput).toHaveBeenCalledWith(
 				expect.objectContaining({
 					type: "warning",
 					text: expect.arrayContaining([
-						expect.stringContaining("Plan creation cancelled by user"),
+						expect.stringContaining("Operation cancelled by user"),
 					]),
 				}),
 			);

@@ -22,3 +22,4 @@ export {
 	resolvePlanFolder,
 } from "./filesystem";
 export { buildToolOutput } from "./output";
+export { askPlanEdit } from "./ask";

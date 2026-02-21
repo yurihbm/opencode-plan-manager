@@ -424,14 +424,14 @@ describe("plan_update", () => {
 			rejectCtx,
 		);
 
-		expect(result).toContain("Plan update cancelled by user");
+		expect(result).toContain("Operation cancelled by user");
 
 		// Verify buildToolOutput was called with warning type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "warning",
 				text: expect.arrayContaining([
-					expect.stringContaining("Plan update cancelled by user"),
+					expect.stringContaining("Operation cancelled by user"),
 				]),
 			}),
 		);
