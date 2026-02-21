@@ -1,9 +1,9 @@
 import type { PlanMetadata, PlanStatus } from "../types";
+import type { PlanFileChange } from "../utils";
 
 import { join, relative } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
-import { createPatch } from "diff";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
@@ -16,6 +16,7 @@ import {
 	generatePlanMarkdown,
 	isValidTransition,
 	movePlanFolder,
+	prepareUnifiedPlanDiff,
 	readMetadata,
 	resolvePlanFolder,
 	updateTaskStatus,
@@ -165,38 +166,35 @@ export const planUpdate = tool({
 				const specRelPath = relative(context.directory, specFilePath);
 				const implRelPath = relative(context.directory, implFilePath);
 
-				const patterns: string[] = [];
-				if (willChangeSpec) patterns.push(specRelPath);
-				if (willChangeImpl) patterns.push(implRelPath);
-
-				let totalDiff: string;
-				if (willChangeSpec && willChangeImpl) {
-					// Virtual combined file: current and new states side by side
-					const currentCombined =
-						currentSpecContent + "\n\n---\n\n" + currentImplContent;
-					const newCombined = newSpecContent + "\n\n---\n\n" + newImplContent;
-					totalDiff = createPatch(args.id, currentCombined, newCombined);
-				} else if (willChangeSpec) {
-					totalDiff = createPatch(
-						specRelPath,
-						currentSpecContent,
-						newSpecContent,
-					);
-				} else {
-					totalDiff = createPatch(
-						implRelPath,
-						currentImplContent,
-						newImplContent,
-					);
+				// Build changeset for files that are changing
+				const changes: PlanFileChange[] = [];
+				if (willChangeSpec) {
+					changes.push({
+						filename: SPECIFICATIONS_FILE_NAME,
+						current: currentSpecContent,
+						updated: newSpecContent,
+						relativePath: specRelPath,
+					});
 				}
+				if (willChangeImpl) {
+					changes.push({
+						filename: IMPLEMENTATION_FILE_NAME,
+						current: currentImplContent,
+						updated: newImplContent,
+						relativePath: implRelPath,
+					});
+				}
+
+				// Prepare unified diff
+				const { diff, relPath } = prepareUnifiedPlanDiff(
+					args.id,
+					changes as [PlanFileChange] | [PlanFileChange, PlanFileChange],
+				);
 
 				const askOutput = await askPlanEdit({
 					planId: args.id,
-					relPath: {
-						specifications: specRelPath,
-						implementation: implRelPath,
-					},
-					diff: totalDiff,
+					relPath,
+					diff,
 					context,
 				});
 

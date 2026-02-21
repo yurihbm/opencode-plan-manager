@@ -4,7 +4,6 @@ import { rm } from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
-import { createPatch } from "diff";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
@@ -18,6 +17,7 @@ import {
 	generatePlanId,
 	generatePlanMarkdown,
 	getPlanPaths,
+	prepareUnifiedPlanDiff,
 	resolvePlanFolder,
 	validateUniquePhaseNames,
 	validateUniqueTaskNames,
@@ -122,19 +122,29 @@ export const planCreate = tool({
 			const specFilePath = join(folderPath, SPECIFICATIONS_FILE_NAME);
 			const implFilePath = join(folderPath, IMPLEMENTATION_FILE_NAME);
 
-			const combinedContent = specMarkdown + "\n\n---\n\n" + planMarkdown;
-			const totalDiff = createPatch(planId, "", combinedContent);
-
 			const specRelativePath = relative(context.directory, specFilePath);
 			const implRelativePath = relative(context.directory, implFilePath);
 
+			// Prepare unified diff for both files (create scenario: current = "")
+			const { diff, relPath } = prepareUnifiedPlanDiff(planId, [
+				{
+					filename: SPECIFICATIONS_FILE_NAME,
+					current: "",
+					updated: specMarkdown,
+					relativePath: specRelativePath,
+				},
+				{
+					filename: IMPLEMENTATION_FILE_NAME,
+					current: "",
+					updated: planMarkdown,
+					relativePath: implRelativePath,
+				},
+			]);
+
 			const askOutput = await askPlanEdit({
 				planId,
-				relPath: {
-					specifications: specRelativePath,
-					implementation: implRelativePath,
-				},
-				diff: totalDiff,
+				relPath,
+				diff,
 				context,
 			});
 

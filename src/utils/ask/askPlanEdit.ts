@@ -9,8 +9,8 @@ import { buildToolOutput } from "../output";
 export interface AskPlanEditInput {
 	planId: string;
 	relPath: {
-		specifications: string;
-		implementation: string;
+		specifications?: string;
+		implementation?: string;
 	};
 	diff: string;
 	context: ToolContext;
@@ -33,10 +33,18 @@ export async function askPlanEdit({
 }: AskPlanEditInput): Promise<AskPlanEditOutput> {
 	let rejectReason: "user" | "config" | null = null;
 
+	const patterns: string[] = [];
+	if (relPath.specifications) {
+		patterns.push(relPath.specifications);
+	}
+	if (relPath.implementation) {
+		patterns.push(relPath.implementation);
+	}
+
 	try {
 		await context.ask({
 			permission: "edit",
-			patterns: [relPath.specifications, relPath.implementation],
+			patterns: patterns,
 			always: [".opencode/plans/*"],
 			metadata: {
 				filepath: `${planId}: ${SPECIFICATIONS_FILE_NAME} & ${IMPLEMENTATION_FILE_NAME}`,
