@@ -1,8 +1,10 @@
 import type { PlanMetadata, PlanType } from "../types";
 
-import { join } from "node:path";
+import { rm } from "node:fs/promises";
+import { join, relative } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
+import { createPatch } from "diff";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
@@ -95,10 +97,6 @@ export const planCreate = tool({
 				});
 			}
 
-			// Create plan folder
-			const folderPath = join(paths.pending, planId);
-			await Bun.write(join(folderPath, ".gitkeep"), "");
-
 			// Build metadata
 			const now = new Date().toISOString();
 			const metadata: PlanMetadata = {
@@ -117,14 +115,82 @@ export const planCreate = tool({
 				implementation: args.implementation,
 			});
 
+			// Create plan folder
+			const folderPath = join(paths.pending, planId);
+
 			const specFilePath = join(folderPath, SPECIFICATIONS_FILE_NAME);
 			const implFilePath = join(folderPath, IMPLEMENTATION_FILE_NAME);
 
-			await Promise.all([
-				writeMetadata(folderPath, metadata),
-				Bun.write(specFilePath, specMarkdown),
-				Bun.write(implFilePath, planMarkdown),
-			]);
+			const combinedContent = specMarkdown + "\n\n---\n\n" + planMarkdown;
+			const totalDiff = createPatch(planId, "", combinedContent);
+
+			const specRelativePath = relative(context.directory, specFilePath);
+			const implRelativePath = relative(context.directory, implFilePath);
+
+			let rejectReason: "user" | "config" | null = null;
+			try {
+				await context.ask({
+					permission: "edit",
+					patterns: [specRelativePath, implRelativePath],
+					always: [".opencode/plans/*"],
+					metadata: {
+						filepath: `${planId}: ${SPECIFICATIONS_FILE_NAME} & ${IMPLEMENTATION_FILE_NAME}`,
+						diff: totalDiff,
+					},
+				});
+			} catch (error) {
+				// These are workarounds to classify the reason for rejection since error
+				// types are not provided to OpenCode plugins at this time.
+
+				// 1. Check if it's a DeniedError (Config-based)
+				if (error && typeof error === "object" && "ruleset" in error) {
+					rejectReason = "config";
+				}
+				// 2. Otherwise treat it as a User-based rejection
+				else {
+					rejectReason = "user";
+				}
+			}
+
+			if (rejectReason == "config") {
+				return buildToolOutput({
+					type: "error",
+					text: [
+						"Plan creation was BLOCKED by a security policy in the user's configuration.",
+						"NEXT STEP: Inform the user that Plan Agent should be able to perform edits on `.opencode/plans/*`.",
+					],
+				});
+			}
+
+			if (rejectReason == "user") {
+				return buildToolOutput({
+					type: "warning",
+					text: [
+						"Plan creation cancelled by user.",
+						"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying to create again.",
+					],
+				});
+			}
+
+			try {
+				// Create plan files
+				await Promise.all([
+					writeMetadata(folderPath, metadata),
+					Bun.write(specFilePath, specMarkdown),
+					Bun.write(implFilePath, planMarkdown),
+				]);
+			} catch (error) {
+				// If writing files fails, attempt to clean up the created folder to avoid clutter
+				await rm(folderPath, { recursive: true, force: true });
+
+				return buildToolOutput({
+					type: "error",
+					text: [
+						"Failed to create plan files after user approval.",
+						error instanceof Error ? error.message : "Unknown error",
+					],
+				});
+			}
 
 			return buildToolOutput({
 				type: "success",
