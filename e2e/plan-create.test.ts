@@ -4,24 +4,39 @@ import type { TestContext } from "./setup";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
 	SPECIFICATIONS_FILE_NAME,
 } from "../src/constants";
 import { planCreate } from "../src/tools/plan-create";
+import { buildToolOutput } from "../src/utils/output/buildToolOutput";
 import { createTestContext } from "./setup";
 
 describe("plan_create", () => {
 	let ctx: TestContext;
+	let originalBuildToolOutput: typeof buildToolOutput;
+	let mockBuildToolOutput: ReturnType<typeof mock>;
 
 	beforeEach(async () => {
 		ctx = await createTestContext();
+
+		originalBuildToolOutput = buildToolOutput;
+		mockBuildToolOutput = mock(({ text }) => {
+			return text.join("\n");
+		});
+		mock.module("../src/utils/output/buildToolOutput", () => ({
+			buildToolOutput: mockBuildToolOutput,
+		}));
 	});
 
 	afterEach(async () => {
 		await ctx.cleanup();
+
+		mock.module("../src/utils/output/buildToolOutput", () => ({
+			buildToolOutput: originalBuildToolOutput,
+		}));
 	});
 
 	test("should create a new plan with correct structure", async () => {
@@ -55,11 +70,17 @@ describe("plan_create", () => {
 		const result = await planCreate.execute(input, ctx.context);
 
 		// Check if result indicates success
-		expect(result).toContain("Plan created successfully!");
+		expect(result).toContain("Plan created successfully");
 
-		// Check if ID is in the result (assuming deterministic ID generation)
-		// "feature_test-plan_YYYYMMDD" format usually
-		expect(result).toContain("feature_test-plan");
+		// Verify buildToolOutput was called with success type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "success",
+				text: expect.arrayContaining([
+					expect.stringContaining("Plan created successfully"),
+				]),
+			}),
+		);
 
 		// Verify file system structure
 		const pendingDir = join(ctx.directory, ".opencode", "plans", "pending");
@@ -138,7 +159,7 @@ describe("plan_create", () => {
 		// Second creation with same title
 		const result2 = await planCreate.execute(input, ctx.context);
 
-		expect(result2).toContain("Plan created successfully!");
+		expect(result2).toContain("Plan created successfully");
 		// Should have a suffix like -2
 		// expected ID: bug_duplicate-plan_DATE-2
 
@@ -180,6 +201,16 @@ describe("plan_create", () => {
 		};
 
 		const result = await planCreate.execute(input, ctx.context);
-		expect(result).toContain("Error: Duplicate phase names found");
+		expect(result).toContain("Duplicate phase names found");
+
+		// Verify buildToolOutput was called with warning type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "warning",
+				text: expect.arrayContaining([
+					expect.stringContaining("Duplicate phase names found"),
+				]),
+			}),
+		);
 	});
 });

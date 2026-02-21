@@ -3,7 +3,7 @@ import type { TestContext } from "./setup";
 
 import { join } from "node:path";
 
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
@@ -11,14 +11,25 @@ import {
 } from "../src/constants";
 import { planCreate } from "../src/tools/plan-create";
 import { planUpdate } from "../src/tools/plan-update";
+import { buildToolOutput } from "../src/utils/output/buildToolOutput";
 import { createTestContext } from "./setup";
 
 describe("plan_update", () => {
 	let ctx: TestContext;
 	let planId: string;
+	let originalBuildToolOutput: typeof buildToolOutput;
+	let mockBuildToolOutput: ReturnType<typeof mock>;
 
 	beforeEach(async () => {
 		ctx = await createTestContext();
+
+		originalBuildToolOutput = buildToolOutput;
+		mockBuildToolOutput = mock(({ text }) => {
+			return text.join("\n");
+		});
+		mock.module("../src/utils/output/buildToolOutput", () => ({
+			buildToolOutput: mockBuildToolOutput,
+		}));
 
 		const input: CreatePlanInput = {
 			metadata: {
@@ -61,6 +72,10 @@ describe("plan_update", () => {
 
 	afterEach(async () => {
 		await ctx.cleanup();
+
+		mock.module("../src/utils/output/buildToolOutput", () => ({
+			buildToolOutput: originalBuildToolOutput,
+		}));
 	});
 
 	test("returns error for non-existent plan", async () => {
@@ -80,8 +95,16 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain(
-			"Error: Invalid status transition 'pending' → 'done'.",
+		expect(result).toContain("Invalid status transition 'pending' → 'done'");
+
+		// Verify buildToolOutput was called with error type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "error",
+				text: expect.arrayContaining([
+					expect.stringContaining("Invalid status transition"),
+				]),
+			}),
 		);
 	});
 
@@ -105,8 +128,16 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain(
-			"Error: Duplicate task names found. Task names must be unique across all phases.",
+		expect(result).toContain("Duplicate task names found");
+
+		// Verify buildToolOutput was called with warning type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "warning",
+				text: expect.arrayContaining([
+					expect.stringContaining("Duplicate task names found"),
+				]),
+			}),
 		);
 	});
 

@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
+	buildToolOutput,
 	generatePlanMarkdown,
 	isValidTransition,
 	movePlanFolder,
@@ -32,7 +33,13 @@ export const planUpdate = tool({
 			const location = await resolvePlanFolder(context.directory, args.id);
 
 			if (!location) {
-				return `Plan '${args.id}' not found in any status directory.\n\nUse plan_list to see available plans.`;
+				return buildToolOutput({
+					type: "error",
+					text: [
+						`Plan '${args.id}' not found in any status directory.`,
+						"Use `plan_list` tool to see available plans.",
+					],
+				});
 			}
 
 			const updateMessages: string[] = [];
@@ -42,11 +49,16 @@ export const planUpdate = tool({
 			// --- Status transition (folder move) ---
 			if (args.status !== undefined && args.status !== currentStatus) {
 				if (!isValidTransition(currentStatus, args.status)) {
-					return `Error: Invalid status transition '${currentStatus}' → '${args.status}'.
-Allowed transitions:
-  - pending → in_progress
-  - in_progress → done
-	- in_progress → pending`;
+					return buildToolOutput({
+						type: "error",
+						text: [
+							`Invalid status transition '${currentStatus}' → '${args.status}'.`,
+							"Allowed transitions:",
+							"- pending → in_progress",
+							"- in_progress → done",
+							"- in_progress → pending",
+						],
+					});
 				}
 
 				const newPath = await movePlanFolder(
@@ -76,10 +88,17 @@ Allowed transitions:
 
 			if (args.implementation !== undefined) {
 				// Validate duplicate task names
-				const duplicates = validateUniqueTaskNames(args.implementation);
-				if (duplicates.length > 0) {
-					return `Error: Duplicate task names found. Task names must be unique across all phases.
-Duplicates: ${duplicates.join(", ")}`;
+				const taskDuplicates = validateUniqueTaskNames(args.implementation);
+				if (taskDuplicates.length > 0) {
+					return buildToolOutput({
+						type: "warning",
+						text: [
+							"Duplicate task names found.",
+							"Task names must be unique across all phases to ensure reliable updates.",
+							`Duplicates: ${taskDuplicates.join(", ")}`,
+							"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
+						],
+					});
 				}
 
 				const implMarkdown = generatePlanMarkdown({
@@ -99,7 +118,13 @@ Duplicates: ${duplicates.join(", ")}`;
 				const planFile = Bun.file(planFilePath);
 
 				if (!(await planFile.exists())) {
-					return `Error: ${IMPLEMENTATION_FILE_NAME} not found. Cannot update tasks without a plan file.`;
+					return buildToolOutput({
+						type: "error",
+						text: [
+							`${IMPLEMENTATION_FILE_NAME} not found in plan folder.`,
+							"Cannot update tasks without an implementation file.",
+						],
+					});
 				}
 
 				let planContent = await planFile.text();
@@ -125,7 +150,7 @@ Duplicates: ${duplicates.join(", ")}`;
 
 				if (taskErrors.length > 0) {
 					updateMessages.push(
-						`\nWarnings:\n${taskErrors.map((e) => `- ${e}`).join("\n")}`,
+						`Warnings:\n${taskErrors.map((e) => `- ${e}`).join("\n")}`,
 					);
 				}
 			}
@@ -142,16 +167,26 @@ Duplicates: ${duplicates.join(", ")}`;
 			// Build response
 			const changesList = updateMessages.map((m) => `- ${m}`).join("\n");
 
-			return `✓ Plan updated successfully!
-
-**Plan ID:** ${args.id}
-**Status:** ${currentStatus}
-**Updated:** ${updatedMetadata.updated_at}
-
-**Changes:**
-${changesList}`;
+			return buildToolOutput({
+				type: "success",
+				text: [
+					"Plan updated successfully:",
+					`- Plan ID: ${args.id}`,
+					`- Status: ${currentStatus}`,
+					`- Updated: ${updatedMetadata.updated_at}`,
+					"",
+					"Changes:",
+					changesList,
+				],
+			});
 		} catch (error) {
-			return `Error updating plan: ${error instanceof Error ? error.message : "Unknown error"}`;
+			return buildToolOutput({
+				type: "error",
+				text: [
+					"An error occurred while updating the plan.",
+					error instanceof Error ? error.message : "Unknown error",
+				],
+			});
 		}
 	},
 });
