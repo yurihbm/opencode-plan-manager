@@ -1,10 +1,9 @@
 const TAG_BY_TYPE = {
-	confirmation: "tool-confirmation",
+	info: "tool-info",
+	success: "tool-success",
 	warning: "tool-warning",
 	error: "tool-error",
 	reminder: "tool-reminder",
-	info: "tool-info",
-	success: "tool-success",
 };
 
 type MessageType = keyof typeof TAG_BY_TYPE;
@@ -42,7 +41,8 @@ interface BuildToolOutputInput {
  */
 export function buildToolOutput({ text, type }: BuildToolOutputInput): string {
 	const tag = TAG_BY_TYPE[type];
-	return [`<${tag}>`, ...text.map((paragraph) => `\t${paragraph}`), `</${tag}>`]
+
+	return [`<${tag}>`, ...text.map((paragraph) => paragraph.trim()), `</${tag}>`]
 		.join("\n")
 		.trim();
 }

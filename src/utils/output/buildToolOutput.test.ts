@@ -10,7 +10,7 @@ describe("buildToolOutput", () => {
 		});
 
 		expect(output).toBe(
-			`<tool-success>\n\tOperation completed successfully.\n</tool-success>`,
+			`<tool-success>\nOperation completed successfully.\n</tool-success>`,
 		);
 	});
 
@@ -24,7 +24,7 @@ describe("buildToolOutput", () => {
 		});
 
 		expect(output).toBe(
-			`<tool-error>\n\tAn error occurred while processing your request.\n\tPlease try again later.\n</tool-error>`,
+			`<tool-error>\nAn error occurred while processing your request.\nPlease try again later.\n</tool-error>`,
 		);
 	});
 
@@ -35,5 +35,19 @@ describe("buildToolOutput", () => {
 		});
 
 		expect(output).toBe(`<tool-warning>\n</tool-warning>`);
+	});
+
+	test("should trim each paragraph in the text array", () => {
+		const output = buildToolOutput({
+			type: "info",
+			text: [
+				"   This is an info message.   ",
+				"   Please read the documentation for more details.   ",
+			],
+		});
+
+		expect(output).toBe(
+			`<tool-info>\nThis is an info message.\nPlease read the documentation for more details.\n</tool-info>`,
+		);
 	});
 });
