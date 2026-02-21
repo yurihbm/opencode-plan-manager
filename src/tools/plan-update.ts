@@ -1,8 +1,9 @@
 import type { PlanMetadata, PlanStatus } from "../types";
 
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
+import { createPatch } from "diff";
 
 import {
 	IMPLEMENTATION_FILE_NAME,
@@ -75,79 +76,220 @@ export const planUpdate = tool({
 				);
 			}
 
-			if (args.specifications !== undefined) {
-				const specMarkdown = generatePlanMarkdown({
-					specifications: args.specifications,
-				});
-				await Bun.write(
-					join(currentPath, SPECIFICATIONS_FILE_NAME),
-					specMarkdown,
-				);
-				updateMessages.push(`${SPECIFICATIONS_FILE_NAME} updated`);
-			}
+			// --- Content changes: spec, implementation, and/or taskUpdates ---
+			// Note: schema enforces that implementation and taskUpdates are mutually exclusive.
+			const willChangeSpec = args.specifications !== undefined;
+			const willChangeImpl =
+				args.implementation !== undefined ||
+				(args.taskUpdates !== undefined && args.taskUpdates.length > 0);
 
-			if (args.implementation !== undefined) {
-				// Validate duplicate task names
-				const taskDuplicates = validateUniqueTaskNames(args.implementation);
-				if (taskDuplicates.length > 0) {
-					return buildToolOutput({
-						type: "warning",
-						text: [
-							"Duplicate task names found.",
-							"Task names must be unique across all phases to ensure reliable updates.",
-							`Duplicates: ${taskDuplicates.join(", ")}`,
-							"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
-						],
-					});
-				}
+			if (willChangeSpec || willChangeImpl) {
+				const specFilePath = join(currentPath, SPECIFICATIONS_FILE_NAME);
+				const implFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 
-				const implMarkdown = generatePlanMarkdown({
-					implementation: args.implementation,
-				});
-
-				await Bun.write(
-					join(currentPath, IMPLEMENTATION_FILE_NAME),
-					implMarkdown,
-				);
-				updateMessages.push(`${IMPLEMENTATION_FILE_NAME} updated`);
-			}
-
-			// --- Batch Update Tasks ---
-			if (args.taskUpdates && args.taskUpdates.length > 0) {
-				const planFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
-				const planFile = Bun.file(planFilePath);
-
-				if (!(await planFile.exists())) {
-					return buildToolOutput({
-						type: "error",
-						text: [
-							`${IMPLEMENTATION_FILE_NAME} not found in plan folder.`,
-							"Cannot update tasks without an implementation file.",
-						],
-					});
-				}
-
-				let planContent = await planFile.text();
-				const taskErrors: string[] = [];
-
-				for (const update of args.taskUpdates) {
-					try {
-						planContent = updateTaskStatus(
-							planContent,
-							update.content,
-							update.status,
-						);
-						updateMessages.push(`Task "${update.content}" → ${update.status}`);
-					} catch (error) {
-						taskErrors.push(
-							`Failed to update task "${update.content}": ${error instanceof Error ? error.message : "Unknown error"}`,
-						);
+				// Validate duplicate task names early (before reading files or asking)
+				if (args.implementation !== undefined) {
+					const taskDuplicates = validateUniqueTaskNames(args.implementation);
+					if (taskDuplicates.length > 0) {
+						return buildToolOutput({
+							type: "warning",
+							text: [
+								"Duplicate task names found.",
+								"Task names must be unique across all phases to ensure reliable updates.",
+								`Duplicates: ${taskDuplicates.join(", ")}`,
+								"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
+							],
+						});
 					}
 				}
 
-				// Write updated content back to file
-				await Bun.write(planFilePath, planContent);
+				// Check that the implementation file exists when taskUpdates are requested
+				if (args.taskUpdates && args.taskUpdates.length > 0) {
+					const implFile = Bun.file(implFilePath);
+					if (!(await implFile.exists())) {
+						return buildToolOutput({
+							type: "error",
+							text: [
+								`${IMPLEMENTATION_FILE_NAME} not found in plan folder.`,
+								"Cannot update tasks without an implementation file.",
+							],
+						});
+					}
+				}
 
+				// Read current file contents for diff generation and restoration on failure
+				const currentSpecContent = willChangeSpec
+					? await Bun.file(specFilePath).text()
+					: "";
+				const currentImplContent = willChangeImpl
+					? await Bun.file(implFilePath).text()
+					: "";
+
+				// Compute new spec content
+				const newSpecContent = willChangeSpec
+					? generatePlanMarkdown({ specifications: args.specifications })
+					: "";
+
+				// Compute new impl content.
+				// Schema guarantees implementation and taskUpdates are mutually exclusive.
+				const taskErrors: string[] = [];
+				let newImplContent = "";
+				if (willChangeImpl) {
+					if (args.implementation !== undefined) {
+						newImplContent = generatePlanMarkdown({
+							implementation: args.implementation,
+						});
+					} else {
+						// taskUpdates: apply each update onto the current file content
+						newImplContent = currentImplContent;
+						for (const update of args.taskUpdates!) {
+							try {
+								newImplContent = updateTaskStatus(
+									newImplContent,
+									update.content,
+									update.status,
+								);
+							} catch (error) {
+								taskErrors.push(
+									`Failed to update task "${update.content}": ${error instanceof Error ? error.message : "Unknown error"}`,
+								);
+							}
+						}
+					}
+				}
+
+				// Build a single unified diff for the .ask call.
+				// OpenCode supports only one diff block, so when both files change we
+				// combine them into a single virtual file (same pattern as plan-create).
+				const specRelPath = relative(context.directory, specFilePath);
+				const implRelPath = relative(context.directory, implFilePath);
+
+				const patterns: string[] = [];
+				if (willChangeSpec) patterns.push(specRelPath);
+				if (willChangeImpl) patterns.push(implRelPath);
+
+				let totalDiff: string;
+				let filepathLabel: string;
+
+				if (willChangeSpec && willChangeImpl) {
+					// Virtual combined file: current and new states side by side
+					const currentCombined =
+						currentSpecContent + "\n\n---\n\n" + currentImplContent;
+					const newCombined = newSpecContent + "\n\n---\n\n" + newImplContent;
+					totalDiff = createPatch(args.id, currentCombined, newCombined);
+					filepathLabel = `${args.id}: ${SPECIFICATIONS_FILE_NAME} & ${IMPLEMENTATION_FILE_NAME}`;
+				} else if (willChangeSpec) {
+					totalDiff = createPatch(
+						specRelPath,
+						currentSpecContent,
+						newSpecContent,
+					);
+					filepathLabel = `${args.id}: ${SPECIFICATIONS_FILE_NAME}`;
+				} else {
+					totalDiff = createPatch(
+						implRelPath,
+						currentImplContent,
+						newImplContent,
+					);
+					filepathLabel = `${args.id}: ${IMPLEMENTATION_FILE_NAME}`;
+				}
+
+				// Ask user for confirmation before writing
+				let rejectReason: "user" | "config" | null = null;
+				try {
+					await context.ask({
+						permission: "edit",
+						patterns,
+						always: [".opencode/plans/*"],
+						metadata: {
+							filepath: filepathLabel,
+							diff: totalDiff,
+						},
+					});
+				} catch (error) {
+					// These are workarounds to classify the reason for rejection since error
+					// types are not provided to OpenCode plugins at this time.
+
+					// 1. Check if it's a DeniedError (Config-based)
+					if (error && typeof error === "object" && "ruleset" in error) {
+						rejectReason = "config";
+					}
+					// 2. Otherwise treat it as a User-based rejection
+					else {
+						rejectReason = "user";
+					}
+				}
+
+				if (rejectReason === "config") {
+					return buildToolOutput({
+						type: "error",
+						text: [
+							"Plan update was BLOCKED by a security policy in the user's configuration.",
+							"NEXT STEP: Inform the user that Plan Agent should be able to perform edits on `.opencode/plans/*`.",
+						],
+					});
+				}
+
+				if (rejectReason === "user") {
+					return buildToolOutput({
+						type: "warning",
+						text: [
+							"Plan update cancelled by user.",
+							"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying to update again.",
+						],
+					});
+				}
+
+				// Write files, restoring originals on failure
+				try {
+					if (willChangeSpec) {
+						await Bun.write(specFilePath, newSpecContent);
+						updateMessages.push(`${SPECIFICATIONS_FILE_NAME} updated`);
+					}
+
+					if (willChangeImpl) {
+						await Bun.write(implFilePath, newImplContent);
+
+						if (args.implementation !== undefined) {
+							updateMessages.push(`${IMPLEMENTATION_FILE_NAME} updated`);
+						}
+
+						if (args.taskUpdates && args.taskUpdates.length > 0) {
+							for (const update of args.taskUpdates) {
+								// Only surface success for tasks that did not error
+								if (
+									!taskErrors.some((e) => e.includes(`"${update.content}"`))
+								) {
+									updateMessages.push(
+										`Task "${update.content}" → ${update.status}`,
+									);
+								}
+							}
+						}
+					}
+				} catch (error) {
+					// Attempt to restore original file contents to avoid leaving the plan
+					// in a partially updated state
+					const restoreOps: Promise<number>[] = [];
+					if (willChangeSpec) {
+						restoreOps.push(Bun.write(specFilePath, currentSpecContent));
+					}
+					if (willChangeImpl) {
+						restoreOps.push(Bun.write(implFilePath, currentImplContent));
+					}
+					await Promise.allSettled(restoreOps);
+
+					return buildToolOutput({
+						type: "error",
+						text: [
+							"Failed to update plan files after user approval.",
+							"Original file contents have been restored.",
+							error instanceof Error ? error.message : "Unknown error",
+						],
+					});
+				}
+
+				// Surface any per-task warnings
 				if (taskErrors.length > 0) {
 					updateMessages.push(
 						`Warnings:\n${taskErrors.map((e) => `- ${e}`).join("\n")}`,

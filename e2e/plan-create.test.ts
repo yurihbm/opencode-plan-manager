@@ -213,4 +213,178 @@ describe("plan_create", () => {
 			}),
 		);
 	});
+
+	test("should return warning and create no files when user rejects", async () => {
+		const userRejectCtx = await createTestContext(
+			"opencode-test-create-",
+			"user",
+		);
+
+		try {
+			const input: CreatePlanInput = {
+				metadata: {
+					title: "User Reject Plan",
+					type: "feature",
+					description: "Will be cancelled by user",
+				},
+				implementation: {
+					description: "Impl",
+					phases: [
+						{ name: "P1", tasks: [{ content: "T1", status: "pending" }] },
+					],
+				},
+				specifications: {
+					description: "Spec",
+					functionals: [],
+					nonFunctionals: [],
+					acceptanceCriterias: [],
+					outOfScope: [],
+				},
+			};
+
+			const result = await planCreate.execute(input, userRejectCtx.context);
+
+			expect(result).toContain("Plan creation cancelled by user");
+
+			// Verify buildToolOutput was called with warning type
+			expect(mockBuildToolOutput).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "warning",
+					text: expect.arrayContaining([
+						expect.stringContaining("Plan creation cancelled by user"),
+					]),
+				}),
+			);
+
+			// Verify no plan files were created
+			const fs = await import("node:fs/promises");
+			const pendingDir = join(
+				userRejectCtx.directory,
+				".opencode",
+				"plans",
+				"pending",
+			);
+			const entries = await fs.readdir(pendingDir);
+			expect(entries.length).toBe(0);
+		} finally {
+			await userRejectCtx.cleanup();
+		}
+	});
+
+	test("should return error and create no files when config policy blocks creation", async () => {
+		const configRejectCtx = await createTestContext(
+			"opencode-test-create-",
+			"config",
+		);
+
+		try {
+			const input: CreatePlanInput = {
+				metadata: {
+					title: "Config Block Plan",
+					type: "feature",
+					description: "Will be blocked by security policy",
+				},
+				implementation: {
+					description: "Impl",
+					phases: [
+						{ name: "P1", tasks: [{ content: "T1", status: "pending" }] },
+					],
+				},
+				specifications: {
+					description: "Spec",
+					functionals: [],
+					nonFunctionals: [],
+					acceptanceCriterias: [],
+					outOfScope: [],
+				},
+			};
+
+			const result = await planCreate.execute(input, configRejectCtx.context);
+
+			expect(result).toContain("BLOCKED by a security policy");
+
+			// Verify buildToolOutput was called with error type
+			expect(mockBuildToolOutput).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "error",
+					text: expect.arrayContaining([
+						expect.stringContaining("BLOCKED by a security policy"),
+					]),
+				}),
+			);
+
+			// Verify no plan files were created
+			const fs = await import("node:fs/promises");
+			const pendingDir = join(
+				configRejectCtx.directory,
+				".opencode",
+				"plans",
+				"pending",
+			);
+			const entries = await fs.readdir(pendingDir);
+			expect(entries.length).toBe(0);
+		} finally {
+			await configRejectCtx.cleanup();
+		}
+	});
+
+	test("should clean up plan folder when write fails after approval", async () => {
+		const input: CreatePlanInput = {
+			metadata: {
+				title: "Write Fail Plan",
+				type: "feature",
+				description: "Will fail on write",
+			},
+			implementation: {
+				description: "Impl",
+				phases: [{ name: "P1", tasks: [{ content: "T1", status: "pending" }] }],
+			},
+			specifications: {
+				description: "Spec",
+				functionals: [],
+				nonFunctionals: [],
+				acceptanceCriterias: [],
+				outOfScope: [],
+			},
+		};
+
+		// Mock Bun.write to throw on the first file write (after ask approval)
+		const originalWrite = Bun.write;
+		let writeCallCount = 0;
+		// @ts-expect-error — spying on Bun global for test purposes
+		Bun.write = async (...args: Parameters<typeof Bun.write>) => {
+			writeCallCount++;
+			if (writeCallCount === 1) {
+				throw new Error("Simulated write failure");
+			}
+			return originalWrite(...args);
+		};
+
+		try {
+			const result = await planCreate.execute(input, ctx.context);
+
+			expect(result).toContain(
+				"Failed to create plan files after user approval",
+			);
+
+			// Verify buildToolOutput was called with error type
+			expect(mockBuildToolOutput).toHaveBeenCalledWith(
+				expect.objectContaining({
+					type: "error",
+					text: expect.arrayContaining([
+						expect.stringContaining("Failed to create plan files"),
+					]),
+				}),
+			);
+
+			// Verify the plan folder was cleaned up (no folder left behind)
+			const fs = await import("node:fs/promises");
+			const pendingDir = join(ctx.directory, ".opencode", "plans", "pending");
+			const entries = await fs.readdir(pendingDir);
+			expect(entries.length).toBe(0);
+		} finally {
+			// Restore Bun.write
+			Bun.write = originalWrite;
+		}
+	});
 });
