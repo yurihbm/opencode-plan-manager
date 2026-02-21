@@ -21,3 +21,4 @@ export {
 	movePlanFolder,
 	resolvePlanFolder,
 } from "./filesystem";
+export { buildToolOutput } from "./output";
