@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { PlanStatusSchema, PlanTypeSchema } from "../schemas";
 import {
+	buildToolOutput,
 	generateMetadatasTable,
 	getPlanPaths,
 	listPlanFolders,
@@ -71,22 +72,35 @@ export const planList = tool({
 			}
 
 			if (results.length === 0) {
-				const filterDesc =
-					args.status === "all"
-						? ""
-						: args.status === "active"
-							? "active "
-							: `${args.status} `;
-				return `No ${filterDesc}plans found.
-To create a new plan, use the plan_create tool.`;
+				let filterDesc = "";
+				if (args.status !== "all") {
+					filterDesc += `${args.status} `;
+				}
+
+				return buildToolOutput({
+					type: "info",
+					text: [
+						`No ${filterDesc}plans found.`,
+						"To create a new plan, use the `plan_create` tool.",
+					],
+				});
 			}
 
 			// Format results as a table
 			const table = generateMetadatasTable(results);
 
-			return [`Found ${results.length} plan(s):`, "", table].join("\n");
+			return buildToolOutput({
+				type: "success",
+				text: [`Found ${results.length} plan(s):`, "", table],
+			});
 		} catch (error) {
-			return `Error listing plans: ${error instanceof Error ? error.message : "Unknown error"}`;
+			return buildToolOutput({
+				type: "error",
+				text: [
+					"An error occurred while listing plans.",
+					`Error details: ${error instanceof Error ? error.message : "Unknown error"}`,
+				],
+			});
 		}
 	},
 });

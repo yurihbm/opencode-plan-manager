@@ -1,6 +1,7 @@
 import type { PlanMetadata, PlanStatus } from "../types";
+import type { PlanFileChange } from "../utils";
 
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 import { tool } from "@opencode-ai/plugin";
 
@@ -10,9 +11,12 @@ import {
 } from "../constants";
 import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
+	askPlanEdit,
+	buildToolOutput,
 	generatePlanMarkdown,
 	isValidTransition,
 	movePlanFolder,
+	prepareUnifiedPlanDiff,
 	readMetadata,
 	resolvePlanFolder,
 	updateTaskStatus,
@@ -32,7 +36,13 @@ export const planUpdate = tool({
 			const location = await resolvePlanFolder(context.directory, args.id);
 
 			if (!location) {
-				return `Plan '${args.id}' not found in any status directory.\n\nUse plan_list to see available plans.`;
+				return buildToolOutput({
+					type: "error",
+					text: [
+						`Plan '${args.id}' not found in any status directory.`,
+						"Use `plan_list` tool to see available plans.",
+					],
+				});
 			}
 
 			const updateMessages: string[] = [];
@@ -42,11 +52,16 @@ export const planUpdate = tool({
 			// --- Status transition (folder move) ---
 			if (args.status !== undefined && args.status !== currentStatus) {
 				if (!isValidTransition(currentStatus, args.status)) {
-					return `Error: Invalid status transition '${currentStatus}' → '${args.status}'.
-Allowed transitions:
-  - pending → in_progress
-  - in_progress → done
-	- in_progress → pending`;
+					return buildToolOutput({
+						type: "error",
+						text: [
+							`Invalid status transition '${currentStatus}' → '${args.status}'.`,
+							"Allowed transitions:",
+							"- pending → in_progress",
+							"- in_progress → done",
+							"- in_progress → pending",
+						],
+					});
 				}
 
 				const newPath = await movePlanFolder(
@@ -63,69 +78,199 @@ Allowed transitions:
 				);
 			}
 
-			if (args.specifications !== undefined) {
-				const specMarkdown = generatePlanMarkdown({
-					specifications: args.specifications,
-				});
-				await Bun.write(
-					join(currentPath, SPECIFICATIONS_FILE_NAME),
-					specMarkdown,
-				);
-				updateMessages.push(`${SPECIFICATIONS_FILE_NAME} updated`);
-			}
+			// --- Content changes: spec, implementation, and/or taskUpdates ---
+			// Note: schema enforces that implementation and taskUpdates are mutually exclusive.
+			const willChangeSpec = args.specifications !== undefined;
+			const willChangeImpl =
+				args.implementation !== undefined ||
+				(args.taskUpdates !== undefined && args.taskUpdates.length > 0);
 
-			if (args.implementation !== undefined) {
-				// Validate duplicate task names
-				const duplicates = validateUniqueTaskNames(args.implementation);
-				if (duplicates.length > 0) {
-					return `Error: Duplicate task names found. Task names must be unique across all phases.
-Duplicates: ${duplicates.join(", ")}`;
-				}
+			if (willChangeSpec || willChangeImpl) {
+				const specFilePath = join(currentPath, SPECIFICATIONS_FILE_NAME);
+				const implFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 
-				const implMarkdown = generatePlanMarkdown({
-					implementation: args.implementation,
-				});
-
-				await Bun.write(
-					join(currentPath, IMPLEMENTATION_FILE_NAME),
-					implMarkdown,
-				);
-				updateMessages.push(`${IMPLEMENTATION_FILE_NAME} updated`);
-			}
-
-			// --- Batch Update Tasks ---
-			if (args.taskUpdates && args.taskUpdates.length > 0) {
-				const planFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
-				const planFile = Bun.file(planFilePath);
-
-				if (!(await planFile.exists())) {
-					return `Error: ${IMPLEMENTATION_FILE_NAME} not found. Cannot update tasks without a plan file.`;
-				}
-
-				let planContent = await planFile.text();
-				const taskErrors: string[] = [];
-
-				for (const update of args.taskUpdates) {
-					try {
-						planContent = updateTaskStatus(
-							planContent,
-							update.content,
-							update.status,
-						);
-						updateMessages.push(`Task "${update.content}" → ${update.status}`);
-					} catch (error) {
-						taskErrors.push(
-							`Failed to update task "${update.content}": ${error instanceof Error ? error.message : "Unknown error"}`,
-						);
+				// Validate duplicate task names early (before reading files or asking)
+				if (args.implementation !== undefined) {
+					const taskDuplicates = validateUniqueTaskNames(args.implementation);
+					if (taskDuplicates.length > 0) {
+						return buildToolOutput({
+							type: "warning",
+							text: [
+								"Duplicate task names found.",
+								"Task names must be unique across all phases to ensure reliable updates.",
+								`Duplicates: ${taskDuplicates.join(", ")}`,
+								"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
+							],
+						});
 					}
 				}
 
-				// Write updated content back to file
-				await Bun.write(planFilePath, planContent);
+				// Check that the implementation file exists when taskUpdates are requested
+				if (args.taskUpdates && args.taskUpdates.length > 0) {
+					const implFile = Bun.file(implFilePath);
+					if (!(await implFile.exists())) {
+						return buildToolOutput({
+							type: "error",
+							text: [
+								`${IMPLEMENTATION_FILE_NAME} not found in plan folder.`,
+								"Cannot update tasks without an implementation file.",
+							],
+						});
+					}
+				}
 
+				// Read current file contents for diff generation and restoration on failure
+				const currentSpecContent = willChangeSpec
+					? await Bun.file(specFilePath).text()
+					: "";
+				const currentImplContent = willChangeImpl
+					? await Bun.file(implFilePath).text()
+					: "";
+
+				// Compute new spec content
+				const newSpecContent = willChangeSpec
+					? generatePlanMarkdown({ specifications: args.specifications })
+					: "";
+
+				// Compute new impl content.
+				// Schema guarantees implementation and taskUpdates are mutually exclusive.
+				const taskErrors: string[] = [];
+				let newImplContent = "";
+				if (willChangeImpl) {
+					if (args.implementation !== undefined) {
+						newImplContent = generatePlanMarkdown({
+							implementation: args.implementation,
+						});
+					} else {
+						// taskUpdates: apply each update onto the current file content
+						newImplContent = currentImplContent;
+						for (const update of args.taskUpdates!) {
+							try {
+								newImplContent = updateTaskStatus(
+									newImplContent,
+									update.content,
+									update.status,
+								);
+							} catch (error) {
+								taskErrors.push(
+									`Failed to update task "${update.content}": ${error instanceof Error ? error.message : "Unknown error"}`,
+								);
+							}
+						}
+
+						// If all task updates failed, return early with an error
+						if (
+							args.taskUpdates &&
+							taskErrors.length === args.taskUpdates.length
+						) {
+							return buildToolOutput({
+								type: "error",
+								text: [
+									"All task updates failed:",
+									...taskErrors.map((e) => `- ${e}`),
+									"",
+									"NEXT STEP: Verify task names match exactly (case-sensitive) and try again.",
+								],
+							});
+						}
+					}
+				}
+
+				// Build a single unified diff for the .ask call.
+				// OpenCode supports only one diff block, so when both files change we
+				// combine them into a single virtual file (same pattern as plan-create).
+				const specRelPath = relative(context.directory, specFilePath);
+				const implRelPath = relative(context.directory, implFilePath);
+
+				// Build changeset for files that are changing
+				const changes: PlanFileChange[] = [];
+				if (willChangeSpec) {
+					changes.push({
+						filename: SPECIFICATIONS_FILE_NAME,
+						current: currentSpecContent,
+						updated: newSpecContent,
+						relativePath: specRelPath,
+					});
+				}
+				if (willChangeImpl) {
+					changes.push({
+						filename: IMPLEMENTATION_FILE_NAME,
+						current: currentImplContent,
+						updated: newImplContent,
+						relativePath: implRelPath,
+					});
+				}
+
+				// Prepare unified diff
+				const { diff, relPath } = prepareUnifiedPlanDiff(
+					args.id,
+					changes as [PlanFileChange] | [PlanFileChange, PlanFileChange],
+				);
+
+				const askOutput = await askPlanEdit({
+					planId: args.id,
+					relPath,
+					diff,
+					context,
+				});
+
+				if (askOutput.rejected) {
+					return askOutput.toolOutput;
+				}
+
+				// Write files, restoring originals on failure
+				try {
+					if (willChangeSpec) {
+						await Bun.write(specFilePath, newSpecContent);
+						updateMessages.push(`${SPECIFICATIONS_FILE_NAME} updated`);
+					}
+
+					if (willChangeImpl) {
+						await Bun.write(implFilePath, newImplContent);
+
+						if (args.implementation !== undefined) {
+							updateMessages.push(`${IMPLEMENTATION_FILE_NAME} updated`);
+						}
+
+						if (args.taskUpdates && args.taskUpdates.length > 0) {
+							for (const update of args.taskUpdates) {
+								// Only surface success for tasks that did not error
+								if (
+									!taskErrors.some((e) => e.includes(`"${update.content}"`))
+								) {
+									updateMessages.push(
+										`Task "${update.content}" → ${update.status}`,
+									);
+								}
+							}
+						}
+					}
+				} catch (error) {
+					// Attempt to restore original file contents to avoid leaving the plan
+					// in a partially updated state
+					const restoreOps: Promise<number>[] = [];
+					if (willChangeSpec) {
+						restoreOps.push(Bun.write(specFilePath, currentSpecContent));
+					}
+					if (willChangeImpl) {
+						restoreOps.push(Bun.write(implFilePath, currentImplContent));
+					}
+					await Promise.allSettled(restoreOps);
+
+					return buildToolOutput({
+						type: "error",
+						text: [
+							"Failed to update plan files after user approval.",
+							"Original file contents have been restored.",
+							error instanceof Error ? error.message : "Unknown error",
+						],
+					});
+				}
+
+				// Surface any per-task warnings
 				if (taskErrors.length > 0) {
 					updateMessages.push(
-						`\nWarnings:\n${taskErrors.map((e) => `- ${e}`).join("\n")}`,
+						`Warnings:\n${taskErrors.map((e) => `- ${e}`).join("\n")}`,
 					);
 				}
 			}
@@ -142,16 +287,26 @@ Duplicates: ${duplicates.join(", ")}`;
 			// Build response
 			const changesList = updateMessages.map((m) => `- ${m}`).join("\n");
 
-			return `✓ Plan updated successfully!
-
-**Plan ID:** ${args.id}
-**Status:** ${currentStatus}
-**Updated:** ${updatedMetadata.updated_at}
-
-**Changes:**
-${changesList}`;
+			return buildToolOutput({
+				type: "success",
+				text: [
+					"Plan updated successfully:",
+					`- Plan ID: ${args.id}`,
+					`- Status: ${currentStatus}`,
+					`- Updated: ${updatedMetadata.updated_at}`,
+					"",
+					"Changes:",
+					changesList,
+				],
+			});
 		} catch (error) {
-			return `Error updating plan: ${error instanceof Error ? error.message : "Unknown error"}`;
+			return buildToolOutput({
+				type: "error",
+				text: [
+					"An error occurred while updating the plan.",
+					error instanceof Error ? error.message : "Unknown error",
+				],
+			});
 		}
 	},
 });

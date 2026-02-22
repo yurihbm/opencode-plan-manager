@@ -63,7 +63,7 @@ describe("plan_list", () => {
 	const movePlan = async (id: string, fromStatus: string, toStatus: string) => {
 		const fromPath = join(ctx.directory, ".opencode", "plans", fromStatus, id);
 		const toPath = join(ctx.directory, ".opencode", "plans", toStatus, id);
-		// Create destination dir if not exists (though opencode creates them usually, planCreate ensures them)
+		// Create destination dir if not exists
 		// planCreate ensures pending, verify others exist
 		const fs = await import("node:fs/promises");
 		await fs.mkdir(join(ctx.directory, ".opencode", "plans", toStatus), {

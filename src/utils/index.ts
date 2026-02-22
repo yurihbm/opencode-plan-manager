@@ -21,3 +21,7 @@ export {
 	movePlanFolder,
 	resolvePlanFolder,
 } from "./filesystem";
+export { buildToolOutput } from "./output";
+export { askPlanEdit } from "./ask";
+export { prepareUnifiedPlanDiff } from "./diff";
+export type { PlanFileChange, PreparedPlanDiff } from "./diff";

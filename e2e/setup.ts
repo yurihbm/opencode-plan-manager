@@ -15,12 +15,18 @@ export interface TestContext {
  * to remove it after tests.
  *
  * @param prefix Optional prefix for the temporary directory name.
+ * @param rejectAsk Controls how `context.ask` behaves:
+ *   - `false` (default): resolves successfully (user approved).
+ *   - `"user"`: rejects with a plain `Error` (user manually rejected).
+ *   - `"config"`: rejects with an object containing a `ruleset` property
+ *     (blocked by a security policy in the user's configuration).
  *
  * @return An object containing the directory path, a cleanup function, and
  * a mock ToolContext.
  */
 export async function createTestContext(
 	prefix = "opencode-test-",
+	rejectAsk: false | "user" | "config" = false,
 ): Promise<TestContext> {
 	const uniqueId = Math.random().toString(36).substring(2, 9);
 	const directory = join(tmpdir(), `${prefix}${uniqueId}`);
@@ -31,7 +37,16 @@ export async function createTestContext(
 	// The execute method receives (args, context) where context has directory
 	const context: ToolContext = {
 		directory,
-	} as ToolContext;
+		ask: async () => {
+			if (rejectAsk === "user") {
+				return Promise.reject(new Error(""));
+			}
+			if (rejectAsk === "config") {
+				return Promise.reject({ ruleset: "policy" });
+			}
+			return Promise.resolve();
+		},
+	} as unknown as ToolContext;
 
 	return {
 		directory,

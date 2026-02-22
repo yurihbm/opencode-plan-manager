@@ -66,10 +66,10 @@ Plan Manager solves this by enforcing **Plan-to-Code Determinism**:
 
 Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.json or similar):
 
-```json
+```jsonc
 {
 	"$schema": "https://opencode.ai/config.json",
-	"plugin": ["opencode-plan-manager@0.2.0"]
+	"plugin": ["opencode-plan-manager@0.2.0"],
 }
 ```
 
@@ -85,11 +85,51 @@ Configuration files are loaded with the following precedence (highest to lowest)
 2. **User Config:** `~/.config/opencode/plan-manager.json` (global user settings)
 3. **Default Config:** Built-in defaults (used when no config files exist)
 
-```json
+```jsonc
 {
-	"outputFormat": "markdown" // "markdown" (default), "json" or "toon" (see https://github.com/toon-format/toon)
+	"outputFormat": "markdown", // "markdown" (default), "json" or "toon" (see https://github.com/toon-format/toon)
 }
 ```
+
+<details>
+<summary>⚠️ Permission Requirement</summary>
+
+> Important:
+> If you deny edit permission in your OpenCode configuration (opencode.json) for the .opencode/plans/\* file pattern, the Plan Manager plugin cannot create or update plans.
+> This is because the plugin uses OpenCode’s built-in ask permission method when modifying plan files. This mechanism shows users a summary of the changes and asks for review (accept/reject) before files are edited, increasing transparency and control.
+
+What does this mean?
+
+- The plan_create and plan_update actions require that AI agents (Plan and Build) have ask or allow permissions for edit on the .opencode/plans/\* pattern.
+- If permission is set to deny, plan creation and modification will fail, and the workflow will not proceed.
+  How to ensure compatibility:
+
+1. Open your opencode.json config file (usually at ~/.config/opencode/opencode.json).
+2. Check the permissions for .opencode/plans/\*.
+3. Make sure edit edit permission is set to "ask" or "allow" for both the Plan Agent and Build Agent.
+
+Here is an example similar to how I configure permissions for the Plan agent:
+
+```jsonc
+{
+	"agent": {
+		"plan": {
+			"permission": {
+				"edit": {
+					"*": "deny", // Deny edits on everything
+					".opencode/plans/*": "ask", // Except for plan files, ask for permission
+				},
+			},
+		},
+	},
+}
+```
+
+References:
+
+- https://opencode.ai/docs/permissions
+
+</details>
 
 ---
 
@@ -150,7 +190,7 @@ plan_create({
 	type: "feature",
 	description: "Secure auth flow with refresh tokens",
 	spec: {
-		overview: "Implement secure JWT-based authentication",
+		description: "Implement secure JWT-based authentication",
 		functionals: ["User login", "Token refresh"],
 		nonFunctionals: ["Passwords hashed with bcrypt"],
 		acceptanceCriterias: ["Successful login returns valid JWT"],
