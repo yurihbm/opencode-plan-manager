@@ -677,4 +677,67 @@ describe("plan_update", () => {
 		);
 		expect(implContent).toContain("- [x] Task 1");
 	});
+
+	test("returns error early when all task updates fail", async () => {
+		let askWasCalled = false;
+
+		// Context that tracks whether ask was called (it should NOT be)
+		const spyCtx = {
+			directory: ctx.directory,
+			ask: async () => {
+				askWasCalled = true;
+				return Promise.resolve();
+			},
+		};
+
+		// Read original implementation file content before the update attempt
+		const fs = await import("node:fs/promises");
+		const implPath = join(
+			ctx.directory,
+			".opencode",
+			"plans",
+			"pending",
+			planId,
+			IMPLEMENTATION_FILE_NAME,
+		);
+		const originalImplContent = await fs.readFile(implPath, "utf-8");
+
+		// Attempt to update tasks that don't exist
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				taskUpdates: [
+					{ content: "Non-existent Task 1", status: "done" },
+					{ content: "Non-existent Task 2", status: "in_progress" },
+					{ content: "Non-existent Task 3", status: "done" },
+				],
+			},
+			// @ts-expect-error — partial context for test
+			spyCtx,
+		);
+
+		// ask should NOT have been called since all tasks failed
+		expect(askWasCalled).toBe(false);
+
+		// Result should be an error with all failures listed
+		expect(result).toContain("All task updates failed");
+		expect(result).toContain('Failed to update task "Non-existent Task 1"');
+		expect(result).toContain('Failed to update task "Non-existent Task 2"');
+		expect(result).toContain('Failed to update task "Non-existent Task 3"');
+		expect(result).toContain("NEXT STEP");
+
+		// Verify buildToolOutput was called with error type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "error",
+				text: expect.arrayContaining([
+					expect.stringContaining("All task updates failed"),
+				]),
+			}),
+		);
+
+		// Verify file content is unchanged
+		const implAfter = await fs.readFile(implPath, "utf-8");
+		expect(implAfter).toBe(originalImplContent);
+	});
 });

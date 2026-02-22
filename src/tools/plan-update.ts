@@ -157,6 +157,22 @@ export const planUpdate = tool({
 								);
 							}
 						}
+
+						// If all task updates failed, return early with an error
+						if (
+							args.taskUpdates &&
+							taskErrors.length === args.taskUpdates.length
+						) {
+							return buildToolOutput({
+								type: "error",
+								text: [
+									"All task updates failed:",
+									...taskErrors.map((e) => `- ${e}`),
+									"",
+									"NEXT STEP: Verify task names match exactly (case-sensitive) and try again.",
+								],
+							});
+						}
 					}
 				}
 

@@ -15,11 +15,11 @@ interface BuildToolOutputInput {
 
 /**
  * Builds a tool output message with the specified text and type.
- * Each item in text array is treated as a separate paragraph and indented
- * with a tab character.
+ * Each item in text array is treated as a separate paragraph and is trimmed of leading and trailing whitespace.
+ * The entire message is wrapped in tags corresponding to the specified type.
  *
  * @param text - An array of strings, where each string is a paragraph of the message.
- * @param type - The type of the message. Defaults to "warning".
+ * @param type - The type of the message.
  *
  * @return A formatted string representing the tool output, wrapped in appropriate
  * tags based on the type.
@@ -34,8 +34,8 @@ interface BuildToolOutputInput {
  * console.log(message);
  * // Output:
  * // <tool-warning>
- * //	This is a warning message.
- * //	Please check your input.
+ * // This is a warning message.
+ * // Please check your input.
  * // </tool-warning>
  * ```
  */

@@ -87,7 +87,7 @@ export function prepareUnifiedPlanDiff(
 	}
 
 	// Case 2: Only one file is changing
-	// At least one change is garanteed by the function signature.
+	// At least one change is guaranteed by the function signature.
 	const change = (specChange || implChange) as PlanFileChange;
 	const diff = createPatch(change.relativePath, change.current, change.updated);
 

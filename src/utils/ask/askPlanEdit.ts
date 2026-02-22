@@ -65,7 +65,7 @@ export async function askPlanEdit({
 		}
 	}
 
-	if (rejectReason == "config") {
+	if (rejectReason === "config") {
 		return {
 			rejected: true,
 			toolOutput: buildToolOutput({
@@ -78,14 +78,14 @@ export async function askPlanEdit({
 		};
 	}
 
-	if (rejectReason == "user") {
+	if (rejectReason === "user") {
 		return {
 			rejected: true,
 			toolOutput: buildToolOutput({
 				type: "warning",
 				text: [
 					"Operation cancelled by user.",
-					"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying to create again.",
+					"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying again.",
 				],
 			}),
 		};
