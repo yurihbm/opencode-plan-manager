@@ -69,7 +69,7 @@ Add the plugin to your OpenCode configuration file (~/.config/opencode/opencode.
 ```jsonc
 {
 	"$schema": "https://opencode.ai/config.json",
-	"plugin": ["opencode-plan-manager@0.2.0"],
+	"plugin": ["opencode-plan-manager@0.4.1"],
 }
 ```
 
