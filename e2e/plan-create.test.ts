@@ -71,6 +71,7 @@ describe("plan_create", () => {
 
 		// Check if result indicates success
 		expect(result).toContain("Plan created successfully");
+		expect(result).toContain("Plan ID: feature_test-plan");
 
 		// Verify buildToolOutput was called with success type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(

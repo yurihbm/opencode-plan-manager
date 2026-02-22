@@ -176,6 +176,7 @@ export const planCreate = tool({
 				type: "success",
 				text: [
 					"Plan created successfully.",
+					`Plan ID: ${planId}`,
 					"NEXT STEP: Tell the user that it can switch to the Build agent to start implementing the plan.",
 				],
 			});

@@ -26,10 +26,13 @@ interface BuildToolOutputInput {
  *
  * @example
  * ```typescript
- * const message = buildToolOutput(
- *  ["This is a warning message.", "Please check your input."],
- *  "warning"
- * );
+ * const message = buildToolOutput({
+ *   type: "warning",
+ *   text: [
+ *     "This is a warning message.",
+ *     "Please check your input.",
+ *   ],
+ * })
  *
  * console.log(message);
  * // Output:
