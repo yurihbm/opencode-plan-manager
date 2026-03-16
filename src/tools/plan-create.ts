@@ -13,6 +13,8 @@ import { CreatePlanInputSchema } from "../schemas";
 import {
 	askPlanEdit,
 	buildToolOutput,
+	DUPLICATE_PHASES_OUTPUT,
+	DUPLICATE_TASKS_OUTPUT,
 	ensurePlanDirectories,
 	generatePlanId,
 	generatePlanMarkdown,
@@ -74,27 +76,13 @@ export const planCreate = tool({
 
 			const phaseDuplicates = validateUniquePhaseNames(args.implementation);
 			if (phaseDuplicates.length > 0) {
-				return buildToolOutput({
-					type: "warning",
-					text: [
-						"Duplicate phase names found. Phase names must be unique.",
-						`Duplicates: ${phaseDuplicates.join(", ")}`,
-						"NEXT STEP: Rename duplicate phases and retry.",
-					],
-				});
+				return DUPLICATE_PHASES_OUTPUT(phaseDuplicates);
 			}
 
 			// Validate duplicate task names across phases
 			const taskDuplicates = validateUniqueTaskNames(args.implementation);
 			if (taskDuplicates.length > 0) {
-				return buildToolOutput({
-					type: "warning",
-					text: [
-						"Duplicate task names found. Task names must be unique across all phases.",
-						`Duplicates: ${taskDuplicates.join(", ")}`,
-						"NEXT STEP: Rename duplicate tasks and retry.",
-					],
-				});
+				return DUPLICATE_TASKS_OUTPUT(taskDuplicates);
 			}
 
 			// Build metadata

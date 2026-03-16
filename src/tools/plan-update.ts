@@ -13,6 +13,7 @@ import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
 	askPlanEdit,
 	buildToolOutput,
+	DUPLICATE_TASKS_OUTPUT,
 	generatePlanMarkdown,
 	isValidTransition,
 	movePlanFolder,
@@ -91,14 +92,7 @@ export const planUpdate = tool({
 				if (args.implementation !== undefined) {
 					const taskDuplicates = validateUniqueTaskNames(args.implementation);
 					if (taskDuplicates.length > 0) {
-						return buildToolOutput({
-							type: "warning",
-							text: [
-								"Duplicate task names found. Task names must be unique across all phases.",
-								`Duplicates: ${taskDuplicates.join(", ")}`,
-								"NEXT STEP: Rename duplicate tasks and retry.",
-							],
-						});
+						return DUPLICATE_TASKS_OUTPUT(taskDuplicates);
 					}
 				}
 
