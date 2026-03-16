@@ -12,11 +12,5 @@ import {
 export const PlanViewSchema = z
 	.enum(["summary", "spec", "plan", "full"], "Invalid plan view")
 	.meta({
-		description: `
-		Defines the level of detail to return when reading a plan:
-			- 'summary' (metadata + progress only)
-		  - 'spec' (metadata + ${SPECIFICATIONS_FILE_NAME})
-			- 'plan' (metadata + ${IMPLEMENTATION_FILE_NAME})
-			- 'full' (everything)
-	`,
+		description: `Level of detail: 'summary' (metadata + progress), 'spec' (metadata + ${SPECIFICATIONS_FILE_NAME}), 'plan' (metadata + ${IMPLEMENTATION_FILE_NAME}), 'full' (everything)`,
 	});

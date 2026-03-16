@@ -24,7 +24,8 @@ import {
  * PLAN_READ: Read a plan with selective views
  */
 export const planRead = tool({
-	description: `Read a specific plan's content, metadata, and tasks. Supports selective views to minimize token usage: 'summary' (metadata + progress only), 'spec' (metadata + ${SPECIFICATIONS_FILE_NAME}), 'plan' (metadata + ${IMPLEMENTATION_FILE_NAME}), 'full' (everything).`,
+	description:
+		"Read a plan's content by ID. Use the 'view' parameter to control how much detail is returned (summary, spec, plan, or full).",
 	args: {
 		id: tool.schema
 			.string()

@@ -19,7 +19,7 @@ import {
  */
 export const planList = tool({
 	description:
-		"List plans with their metadata. Reads only metadata.json files for performance. Defaults to showing pending + in_progress plans. Returns a table with id, description, type, status, and last updated date.",
+		"List plans filtered by status and/or type. Defaults to active (pending + in_progress). Returns a table with id, description, type, status, and last updated date.",
 	args: {
 		status: z
 			.union([PlanStatusSchema, z.enum(["active", "all"])])

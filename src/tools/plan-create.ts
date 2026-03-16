@@ -28,7 +28,8 @@ import {
  * PLAN_CREATE: Create a new folder-per-plan in pending/
  */
 export const planCreate = tool({
-	description: `Create a new plan. Generates a deterministic plan ID from the title and type, then creates a folder in the pending directory with metadata.json, ${SPECIFICATIONS_FILE_NAME}, and ${IMPLEMENTATION_FILE_NAME}.`,
+	description:
+		"Create a new plan with metadata, specifications, and implementation phases. Returns the generated plan ID on success.",
 	args: CreatePlanInputSchema.shape,
 	async execute(args, context) {
 		try {

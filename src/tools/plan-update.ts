@@ -28,7 +28,8 @@ import {
  * PLAN_UPDATE: Update status, content, or tasks
  */
 export const planUpdate = tool({
-	description: `Update a plan's status, content, or tasks. Supports: changing status (moves folder between pending/in_progress/done), replacing ${SPECIFICATIONS_FILE_NAME} or ${IMPLEMENTATION_FILE_NAME} content, and toggling individual task statuses. Auto-updates the updated_at timestamp.`,
+	description:
+		"Update a plan's status, content, or individual task statuses. Use taskUpdates for toggling task progress without replacing the full implementation.",
 	args: UpdatePlanInputBaseSchema.shape,
 	async execute(args, context) {
 		try {
