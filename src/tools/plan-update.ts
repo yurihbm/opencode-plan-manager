@@ -40,8 +40,8 @@ export const planUpdate = tool({
 				return buildToolOutput({
 					type: "error",
 					text: [
-						`Plan '${args.id}' not found in any status directory.`,
-						"Use `plan_list` tool to see available plans.",
+						`Plan '${args.id}' not found.`,
+						"NEXT STEP: Use plan_list to check available plans.",
 					],
 				});
 			}
@@ -56,11 +56,8 @@ export const planUpdate = tool({
 					return buildToolOutput({
 						type: "error",
 						text: [
-							`Invalid status transition '${currentStatus}' → '${args.status}'.`,
-							"Allowed transitions:",
-							"- pending → in_progress",
-							"- in_progress → done",
-							"- in_progress → pending",
+							`Invalid transition: ${currentStatus} → ${args.status}.`,
+							"Allowed: pending→in_progress, in_progress→done, in_progress→pending.",
 						],
 					});
 				}
@@ -97,10 +94,9 @@ export const planUpdate = tool({
 						return buildToolOutput({
 							type: "warning",
 							text: [
-								"Duplicate task names found.",
-								"Task names must be unique across all phases to ensure reliable updates.",
+								"Duplicate task names found. Task names must be unique across all phases.",
 								`Duplicates: ${taskDuplicates.join(", ")}`,
-								"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
+								"NEXT STEP: Rename duplicate tasks and retry.",
 							],
 						});
 					}
@@ -113,8 +109,7 @@ export const planUpdate = tool({
 						return buildToolOutput({
 							type: "error",
 							text: [
-								`${IMPLEMENTATION_FILE_NAME} not found in plan folder.`,
-								"Cannot update tasks without an implementation file.",
+								`${IMPLEMENTATION_FILE_NAME} not found. Cannot update tasks without it.`,
 							],
 						});
 					}
@@ -169,8 +164,7 @@ export const planUpdate = tool({
 								text: [
 									"All task updates failed:",
 									...taskErrors.map((e) => `- ${e}`),
-									"",
-									"NEXT STEP: Verify task names match exactly (case-sensitive) and try again.",
+									"NEXT STEP: Verify task names match exactly (case-sensitive) and retry.",
 								],
 							});
 						}
@@ -261,8 +255,7 @@ export const planUpdate = tool({
 					return buildToolOutput({
 						type: "error",
 						text: [
-							"Failed to update plan files after user approval.",
-							"Original file contents have been restored.",
+							"Failed to write plan files. Original contents restored.",
 							error instanceof Error ? error.message : "Unknown error",
 						],
 					});
@@ -291,12 +284,7 @@ export const planUpdate = tool({
 			return buildToolOutput({
 				type: "success",
 				text: [
-					"Plan updated successfully:",
-					`- Plan ID: ${args.id}`,
-					`- Status: ${currentStatus}`,
-					`- Updated: ${updatedMetadata.updated_at}`,
-					"",
-					"Changes:",
+					`Plan '${args.id}' updated (status: ${currentStatus}):`,
 					changesList,
 				],
 			});
@@ -304,7 +292,7 @@ export const planUpdate = tool({
 			return buildToolOutput({
 				type: "error",
 				text: [
-					"An error occurred while updating the plan.",
+					"Failed to update plan.",
 					error instanceof Error ? error.message : "Unknown error",
 				],
 			});

@@ -51,7 +51,7 @@ export const planCreate = tool({
 						type: "warning",
 						text: [
 							"Too many plans with similar titles.",
-							"Please choose a more unique title or check existing plans with `plan_list` tool.",
+							"NEXT STEP: Choose a more unique title or check existing plans with plan_list.",
 						],
 					});
 				}
@@ -66,8 +66,8 @@ export const planCreate = tool({
 				return buildToolOutput({
 					type: "warning",
 					text: [
-						`A plan with ID '${planId}' already exists in '${existingLocation.status}/' directory.`,
-						"Please choose a different title or check existing plans with `plan_list` tool.",
+						`Plan '${planId}' already exists (status: ${existingLocation.status}).`,
+						"NEXT STEP: Choose a different title or check existing plans with plan_list.",
 					],
 				});
 			}
@@ -77,10 +77,9 @@ export const planCreate = tool({
 				return buildToolOutput({
 					type: "warning",
 					text: [
-						"Duplicate phase names found.",
-						"Phase names must be unique across the implementation document to ensure reliable updates.",
+						"Duplicate phase names found. Phase names must be unique.",
 						`Duplicates: ${phaseDuplicates.join(", ")}`,
-						"NEXT STEP: Change duplicate phase names to be unique and try creating the plan again.",
+						"NEXT STEP: Rename duplicate phases and retry.",
 					],
 				});
 			}
@@ -91,10 +90,9 @@ export const planCreate = tool({
 				return buildToolOutput({
 					type: "warning",
 					text: [
-						"Duplicate task names found.",
-						"Task names must be unique across all phases to ensure reliable updates.",
+						"Duplicate task names found. Task names must be unique across all phases.",
 						`Duplicates: ${taskDuplicates.join(", ")}`,
-						"NEXT STEP: Change duplicate task names to be unique and try creating the plan again.",
+						"NEXT STEP: Rename duplicate tasks and retry.",
 					],
 				});
 			}
@@ -167,7 +165,7 @@ export const planCreate = tool({
 				return buildToolOutput({
 					type: "error",
 					text: [
-						"Failed to create plan files after user approval.",
+						"Failed to write plan files.",
 						error instanceof Error ? error.message : "Unknown error",
 					],
 				});
@@ -176,16 +174,15 @@ export const planCreate = tool({
 			return buildToolOutput({
 				type: "success",
 				text: [
-					"Plan created successfully.",
-					`Plan ID: ${planId}`,
-					"NEXT STEP: Tell the user that it can switch to the Build agent to start implementing the plan.",
+					`Plan created. ID: ${planId}`,
+					"NEXT STEP: Tell the user they can switch to the Build agent to start implementation.",
 				],
 			});
 		} catch (error) {
 			return buildToolOutput({
 				type: "error",
 				text: [
-					"An error occurred while creating the plan.",
+					"Failed to create plan.",
 					error instanceof Error ? error.message : "Unknown error",
 				],
 			});

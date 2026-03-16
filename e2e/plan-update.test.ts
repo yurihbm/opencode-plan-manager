@@ -84,9 +84,7 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain(
-			"Plan 'nonexistent_plan' not found in any status directory.",
-		);
+		expect(result).toContain("Plan 'nonexistent_plan' not found.");
 	});
 
 	test("returns error for invalid status transition", async () => {
@@ -95,14 +93,14 @@ describe("plan_update", () => {
 			ctx.context,
 		);
 
-		expect(result).toContain("Invalid status transition 'pending' → 'done'");
+		expect(result).toContain("Invalid transition: pending → done");
 
 		// Verify buildToolOutput was called with error type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "error",
 				text: expect.arrayContaining([
-					expect.stringContaining("Invalid status transition"),
+					expect.stringContaining("Invalid transition"),
 				]),
 			}),
 		);
@@ -424,14 +422,14 @@ describe("plan_update", () => {
 			rejectCtx,
 		);
 
-		expect(result).toContain("Operation cancelled by user");
+		expect(result).toContain("Cancelled by user");
 
 		// Verify buildToolOutput was called with warning type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "warning",
 				text: expect.arrayContaining([
-					expect.stringContaining("Operation cancelled by user"),
+					expect.stringContaining("Cancelled by user"),
 				]),
 			}),
 		);
@@ -510,14 +508,14 @@ describe("plan_update", () => {
 			configRejectCtx,
 		);
 
-		expect(result).toContain("BLOCKED by a security policy");
+		expect(result).toContain("Blocked by security policy");
 
 		// Verify buildToolOutput was called with error type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "error",
 				text: expect.arrayContaining([
-					expect.stringContaining("BLOCKED by a security policy"),
+					expect.stringContaining("Blocked by security policy"),
 				]),
 			}),
 		);
@@ -602,16 +600,15 @@ describe("plan_update", () => {
 			);
 
 			expect(result).toContain(
-				"Failed to update plan files after user approval",
+				"Failed to write plan files. Original contents restored.",
 			);
-			expect(result).toContain("Original file contents have been restored");
 
 			// Verify buildToolOutput was called with error type
 			expect(mockBuildToolOutput).toHaveBeenCalledWith(
 				expect.objectContaining({
 					type: "error",
 					text: expect.arrayContaining([
-						expect.stringContaining("Failed to update plan files"),
+						expect.stringContaining("Failed to write plan files"),
 					]),
 				}),
 			);

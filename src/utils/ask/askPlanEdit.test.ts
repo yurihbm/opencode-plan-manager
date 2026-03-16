@@ -39,7 +39,7 @@ describe("askPlanEdit", () => {
 
 		expect(output).toEqual({
 			rejected: true,
-			toolOutput: expect.stringContaining("Operation cancelled by user"),
+			toolOutput: expect.stringContaining("Cancelled by user"),
 		});
 	});
 
@@ -53,9 +53,7 @@ describe("askPlanEdit", () => {
 
 		expect(output).toEqual({
 			rejected: true,
-			toolOutput: expect.stringContaining(
-				"Operation was BLOCKED by a security policy in the user's configuration",
-			),
+			toolOutput: expect.stringContaining("Blocked by security policy"),
 		});
 	});
 });

@@ -70,15 +70,15 @@ describe("plan_create", () => {
 		const result = await planCreate.execute(input, ctx.context);
 
 		// Check if result indicates success
-		expect(result).toContain("Plan created successfully");
-		expect(result).toContain("Plan ID: feature_test-plan");
+		expect(result).toContain("Plan created.");
+		expect(result).toContain("ID: feature_test-plan");
 
 		// Verify buildToolOutput was called with success type
 		expect(mockBuildToolOutput).toHaveBeenCalledWith(
 			expect.objectContaining({
 				type: "success",
 				text: expect.arrayContaining([
-					expect.stringContaining("Plan created successfully"),
+					expect.stringContaining("Plan created."),
 				]),
 			}),
 		);
@@ -160,7 +160,7 @@ describe("plan_create", () => {
 		// Second creation with same title
 		const result2 = await planCreate.execute(input, ctx.context);
 
-		expect(result2).toContain("Plan created successfully");
+		expect(result2).toContain("Plan created.");
 		// Should have a suffix like -2
 		// expected ID: bug_duplicate-plan_DATE-2
 
@@ -245,14 +245,14 @@ describe("plan_create", () => {
 
 			const result = await planCreate.execute(input, userRejectCtx.context);
 
-			expect(result).toContain("Operation cancelled by user");
+			expect(result).toContain("Cancelled by user");
 
 			// Verify buildToolOutput was called with warning type
 			expect(mockBuildToolOutput).toHaveBeenCalledWith(
 				expect.objectContaining({
 					type: "warning",
 					text: expect.arrayContaining([
-						expect.stringContaining("Operation cancelled by user"),
+						expect.stringContaining("Cancelled by user"),
 					]),
 				}),
 			);
@@ -302,14 +302,14 @@ describe("plan_create", () => {
 
 			const result = await planCreate.execute(input, configRejectCtx.context);
 
-			expect(result).toContain("BLOCKED by a security policy");
+			expect(result).toContain("Blocked by security policy");
 
 			// Verify buildToolOutput was called with error type
 			expect(mockBuildToolOutput).toHaveBeenCalledWith(
 				expect.objectContaining({
 					type: "error",
 					text: expect.arrayContaining([
-						expect.stringContaining("BLOCKED by a security policy"),
+						expect.stringContaining("Blocked by security policy"),
 					]),
 				}),
 			);
@@ -364,16 +364,14 @@ describe("plan_create", () => {
 		try {
 			const result = await planCreate.execute(input, ctx.context);
 
-			expect(result).toContain(
-				"Failed to create plan files after user approval",
-			);
+			expect(result).toContain("Failed to write plan files");
 
 			// Verify buildToolOutput was called with error type
 			expect(mockBuildToolOutput).toHaveBeenCalledWith(
 				expect.objectContaining({
 					type: "error",
 					text: expect.arrayContaining([
-						expect.stringContaining("Failed to create plan files"),
+						expect.stringContaining("Failed to write plan files"),
 					]),
 				}),
 			);

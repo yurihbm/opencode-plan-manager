@@ -47,8 +47,8 @@ export const planRead = tool({
 				return buildToolOutput({
 					type: "error",
 					text: [
-						`Plan '${args.id}' not found in any status directory.`,
-						"Use `plan_list` tool to see available plans.",
+						`Plan '${args.id}' not found.`,
+						"NEXT STEP: Use plan_list to check available plans.",
 					],
 				});
 			}
@@ -105,13 +105,13 @@ export const planRead = tool({
 
 			return buildToolOutput({
 				type: "success",
-				text: ["Plan read successfully:", "", planOutput],
+				text: [planOutput],
 			});
 		} catch (error) {
 			return buildToolOutput({
 				type: "error",
 				text: [
-					"An error occurred while reading the plan.",
+					"Failed to read plan.",
 					error instanceof Error ? error.message : "Unknown error",
 				],
 			});

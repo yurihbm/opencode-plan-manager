@@ -81,7 +81,7 @@ export const planList = tool({
 					type: "info",
 					text: [
 						`No ${filterDesc}plans found.`,
-						"To create a new plan, use the `plan_create` tool.",
+						"NEXT STEP: Use plan_create to create a new plan.",
 					],
 				});
 			}
@@ -97,8 +97,8 @@ export const planList = tool({
 			return buildToolOutput({
 				type: "error",
 				text: [
-					"An error occurred while listing plans.",
-					`Error details: ${error instanceof Error ? error.message : "Unknown error"}`,
+					"Failed to list plans.",
+					error instanceof Error ? error.message : "Unknown error",
 				],
 			});
 		}

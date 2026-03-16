@@ -71,8 +71,8 @@ export async function askPlanEdit({
 			toolOutput: buildToolOutput({
 				type: "error",
 				text: [
-					"Operation was BLOCKED by a security policy in the user's configuration.",
-					"NEXT STEP: Inform the user that Plan Agent should be able to perform edits on `.opencode/plans/*`.",
+					"Blocked by security policy.",
+					"NEXT STEP: Inform user that you need edit access to `.opencode/plans/*`.",
 				],
 			}),
 		};
@@ -84,8 +84,8 @@ export async function askPlanEdit({
 			toolOutput: buildToolOutput({
 				type: "warning",
 				text: [
-					"Operation cancelled by user.",
-					"NEXT STEP: Ask user for feedback and adjust the plan accordingly before trying again.",
+					"Cancelled by user.",
+					"NEXT STEP: Ask user for feedback and adjust before retrying.",
 				],
 			}),
 		};
