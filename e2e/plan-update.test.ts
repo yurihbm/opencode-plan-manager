@@ -139,6 +139,40 @@ describe("plan_update", () => {
 		);
 	});
 
+	test("returns error for duplicate phase names in implementation update", async () => {
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				implementation: {
+					description: "New Description",
+					phases: [
+						{
+							name: "Duplicate Phase",
+							tasks: [{ content: "Task A", status: "pending" }],
+						},
+						{
+							name: "Duplicate Phase",
+							tasks: [{ content: "Task B", status: "pending" }],
+						},
+					],
+				},
+			},
+			ctx.context,
+		);
+
+		expect(result).toContain("Duplicate phase names found");
+
+		// Verify buildToolOutput was called with warning type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "warning",
+				text: expect.arrayContaining([
+					expect.stringContaining("Duplicate phase names found"),
+				]),
+			}),
+		);
+	});
+
 	test("updates plan status (moves folder)", async () => {
 		const result = await planUpdate.execute(
 			{ id: planId, status: "in_progress" },

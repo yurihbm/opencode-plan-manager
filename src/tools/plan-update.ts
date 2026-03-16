@@ -13,6 +13,7 @@ import { UpdatePlanInputBaseSchema } from "../schemas";
 import {
 	askPlanEdit,
 	buildToolOutput,
+	DUPLICATE_PHASES_OUTPUT,
 	DUPLICATE_TASKS_OUTPUT,
 	generatePlanMarkdown,
 	isValidTransition,
@@ -21,6 +22,7 @@ import {
 	readMetadata,
 	resolvePlanFolder,
 	updateTaskStatus,
+	validateUniquePhaseNames,
 	validateUniqueTaskNames,
 	writeMetadata,
 } from "../utils";
@@ -88,8 +90,13 @@ export const planUpdate = tool({
 				const specFilePath = join(currentPath, SPECIFICATIONS_FILE_NAME);
 				const implFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 
-				// Validate duplicate task names early (before reading files or asking)
+				// Validate duplicate phase and task names early (before reading files or asking)
 				if (args.implementation !== undefined) {
+					const phaseDuplicates = validateUniquePhaseNames(args.implementation);
+					if (phaseDuplicates.length > 0) {
+						return DUPLICATE_PHASES_OUTPUT(phaseDuplicates);
+					}
+
 					const taskDuplicates = validateUniqueTaskNames(args.implementation);
 					if (taskDuplicates.length > 0) {
 						return DUPLICATE_TASKS_OUTPUT(taskDuplicates);
