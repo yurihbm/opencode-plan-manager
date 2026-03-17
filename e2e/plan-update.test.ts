@@ -709,6 +709,209 @@ describe("plan_update", () => {
 		expect(implContent).toContain("- [x] Task 1");
 	});
 
+	test("rejects content updates (spec) on a done plan", async () => {
+		// Move plan to in_progress then to done
+		await planUpdate.execute(
+			{ id: planId, status: "in_progress" },
+			ctx.context,
+		);
+		await planUpdate.execute({ id: planId, status: "done" }, ctx.context);
+
+		// Now attempt a spec update on the done plan
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				specifications: {
+					description: "Should not be written",
+					functionals: ["Should not appear"],
+					nonFunctionals: [],
+					acceptanceCriterias: [],
+					outOfScope: [],
+				},
+			},
+			ctx.context,
+		);
+
+		expect(result).toContain("cannot be modified");
+
+		// Verify buildToolOutput was called with error type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "error",
+				text: expect.arrayContaining([
+					expect.stringContaining("cannot be modified"),
+				]),
+			}),
+		);
+
+		// Verify spec file was NOT updated
+		const fs = await import("node:fs/promises");
+		const specPath = join(
+			ctx.directory,
+			".opencode",
+			"plans",
+			"done",
+			planId,
+			SPECIFICATIONS_FILE_NAME,
+		);
+		const specContent = await fs.readFile(specPath, "utf-8");
+		expect(specContent).not.toContain("Should not be written");
+	});
+
+	test("rejects content updates (implementation) on a done plan", async () => {
+		await planUpdate.execute(
+			{ id: planId, status: "in_progress" },
+			ctx.context,
+		);
+		await planUpdate.execute({ id: planId, status: "done" }, ctx.context);
+
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				implementation: {
+					description: "Should not be written",
+					phases: [
+						{
+							name: "Should not appear",
+							tasks: [{ content: "T", status: "pending" }],
+						},
+					],
+				},
+			},
+			ctx.context,
+		);
+
+		expect(result).toContain("cannot be modified");
+
+		// Verify impl file was NOT updated
+		const fs = await import("node:fs/promises");
+		const implPath = join(
+			ctx.directory,
+			".opencode",
+			"plans",
+			"done",
+			planId,
+			IMPLEMENTATION_FILE_NAME,
+		);
+		const implContent = await fs.readFile(implPath, "utf-8");
+		expect(implContent).not.toContain("Should not be written");
+	});
+
+	test("rejects taskUpdates on a done plan", async () => {
+		await planUpdate.execute(
+			{ id: planId, status: "in_progress" },
+			ctx.context,
+		);
+		await planUpdate.execute({ id: planId, status: "done" }, ctx.context);
+
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				taskUpdates: [{ content: "Task 1", status: "in_progress" }],
+			},
+			ctx.context,
+		);
+
+		expect(result).toContain("cannot be modified");
+
+		// Verify buildToolOutput was called with error type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "error",
+				text: expect.arrayContaining([
+					expect.stringContaining("cannot be modified"),
+				]),
+			}),
+		);
+	});
+
+	test("returns error when implementation.md is missing and taskUpdates are requested", async () => {
+		// Delete the implementation file to simulate a corrupted plan folder
+		const fs = await import("node:fs/promises");
+		const implPath = join(
+			ctx.directory,
+			".opencode",
+			"plans",
+			"pending",
+			planId,
+			IMPLEMENTATION_FILE_NAME,
+		);
+		await fs.unlink(implPath);
+
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				taskUpdates: [{ content: "Task 1", status: "done" }],
+			},
+			ctx.context,
+		);
+
+		expect(result).toContain(`${IMPLEMENTATION_FILE_NAME} not found`);
+		expect(result).toContain("Cannot update tasks without it");
+
+		// Verify buildToolOutput was called with error type
+		expect(mockBuildToolOutput).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "error",
+				text: expect.arrayContaining([
+					expect.stringContaining(`${IMPLEMENTATION_FILE_NAME} not found`),
+				]),
+			}),
+		);
+	});
+
+	test("partial taskUpdates: succeeds for valid tasks and warns about failed ones", async () => {
+		let askWasCalled = false;
+
+		const spyCtx = {
+			directory: ctx.directory,
+			ask: async () => {
+				askWasCalled = true;
+				return Promise.resolve();
+			},
+		};
+
+		// One real task ("Task 1"), one non-existent task
+		const result = await planUpdate.execute(
+			{
+				id: planId,
+				taskUpdates: [
+					{ content: "Task 1", status: "done" },
+					{ content: "Non-existent Task", status: "done" },
+				],
+			},
+			// @ts-expect-error — partial context for test
+			spyCtx,
+		);
+
+		// ask should have been called (at least one task succeeded)
+		expect(askWasCalled).toBe(true);
+
+		// The valid task should be acknowledged
+		expect(result).toContain('Task "Task 1" → done');
+
+		// The failure should be surfaced as a warning
+		expect(result).toContain("Warnings");
+		expect(result).toContain("Non-existent Task");
+
+		// Implementation file should reflect the successful update
+		const fs = await import("node:fs/promises");
+		const implContent = await fs.readFile(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				IMPLEMENTATION_FILE_NAME,
+			),
+			"utf-8",
+		);
+		expect(implContent).toContain("- [x] Task 1");
+		// Task 2 should be untouched
+		expect(implContent).toContain("- [ ] Task 2");
+	});
+
 	test("returns error early when all task updates fail", async () => {
 		let askWasCalled = false;
 

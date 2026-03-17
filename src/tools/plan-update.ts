@@ -87,6 +87,17 @@ export const planUpdate = tool({
 				(args.taskUpdates !== undefined && args.taskUpdates.length > 0);
 
 			if (willChangeSpec || willChangeImpl) {
+				// Done plans are immutable — reject any content modification
+				if (currentStatus === "done") {
+					return buildToolOutput({
+						type: "error",
+						text: [
+							`Plan '${args.id}' is done and cannot be modified.`,
+							"NEXT STEP: Create a new plan if further changes are needed.",
+						],
+					});
+				}
+
 				const specFilePath = join(currentPath, SPECIFICATIONS_FILE_NAME);
 				const implFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 
