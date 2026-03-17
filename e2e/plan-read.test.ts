@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { planCreate } from "../src/tools/plan-create";
 import { planRead } from "../src/tools/plan-read";
+import { clearConfigCache } from "../src/utils/config/load-config";
 import { createTestContext } from "./setup";
 
 describe("plan_read", () => {
@@ -61,6 +62,7 @@ describe("plan_read", () => {
 
 	afterEach(async () => {
 		await ctx.cleanup();
+		clearConfigCache();
 	});
 
 	test("reads full plan by default", async () => {
