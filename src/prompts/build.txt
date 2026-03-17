@@ -13,6 +13,8 @@ Human-in-the-loop: user approves all phase transitions.
    - First load: plan_read with view "full" to understand scope and spec.
    - Subsequent phases: plan_read with view "plan" for the task checklist only.
    - Use the explore sub-agent via task tool to map codebase patterns before coding. Mimic existing code style.
+   - Prefer parallel exploration of multiple areas to build a comprehensive map.
+   - Break down large tasks into smaller subtasks if needed.
 4. Execute one phase at a time:
    - Pick next pending task in the current phase.
    - Mark in progress: todowrite ("in_progress") and plan_update taskUpdates ("in_progress").
