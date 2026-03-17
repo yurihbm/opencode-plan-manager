@@ -974,4 +974,81 @@ describe("plan_update", () => {
 		const implAfter = await fs.readFile(implPath, "utf-8");
 		expect(implAfter).toBe(originalImplContent);
 	});
+
+	test("returns task success even when another task that contains its text fails", async () => {
+		const input: CreatePlanInput = {
+			metadata: {
+				title: "Prefix Name Reverse Regression",
+				type: "feature",
+				description:
+					"Tests exact-match success suppression for task names (reverse)",
+			},
+			implementation: {
+				description: "Impl with prefix-named tasks (reverse)",
+				phases: [
+					{
+						name: "Phase 1",
+						tasks: [
+							{ content: "Task 1", status: "pending" },
+							{ content: "Task 2", status: "pending" },
+						],
+					},
+				],
+			},
+			specifications: {
+				description: "Spec",
+				functionals: [],
+				nonFunctionals: [],
+				acceptanceCriterias: [],
+				outOfScope: [],
+			},
+		};
+
+		await planCreate.execute(input, ctx.context);
+
+		const fs = await import("node:fs/promises");
+		const pending = join(ctx.directory, ".opencode", "plans", "pending");
+		const entries = await fs.readdir(pending);
+		const targetPlanId =
+			entries.find((e) =>
+				e.startsWith("feature_prefix-name-reverse-regression"),
+			) || "";
+
+		// "Task 10" does NOT exist; "Task 1" does.
+		const result = await planUpdate.execute(
+			{
+				id: targetPlanId,
+				taskUpdates: [
+					{ content: "Task 10", status: "done" }, // fails — not in file
+					{ content: "Task 1", status: "done" }, // succeeds — exists in file
+				],
+			},
+			ctx.context,
+		);
+
+		// "Task 1" succeeded — must appear in the success output
+		expect(result).toContain('Task "Task 1" → done');
+
+		// "Task 10" failed — must NOT appear as a success
+		expect(result).not.toContain('Task "Task 10" → done');
+
+		// Warning for the failed task must be present
+		expect(result).toContain("Warnings");
+		expect(result).toContain('"Task 10"');
+
+		// File should reflect the successful update for Task 1
+		const implContent = await fs.readFile(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				targetPlanId,
+				IMPLEMENTATION_FILE_NAME,
+			),
+			"utf-8",
+		);
+		expect(implContent).toContain("- [x] Task 1");
+		expect(implContent).toContain("- [ ] Task 2");
+	});
 });

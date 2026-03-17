@@ -53,6 +53,24 @@ export const planUpdate = tool({
 			let currentPath = location.path;
 			let currentStatus = location.status;
 
+			// --- Content changes: spec, implementation, and/or taskUpdates ---
+			// Note: schema enforces that implementation and taskUpdates are mutually exclusive.
+			const willChangeSpec = args.specifications !== undefined;
+			const willChangeImpl =
+				args.implementation !== undefined ||
+				(args.taskUpdates !== undefined && args.taskUpdates.length > 0);
+
+			// Done plans are immutable — reject any content modification
+			if ((willChangeSpec || willChangeImpl) && currentStatus === "done") {
+				return buildToolOutput({
+					type: "error",
+					text: [
+						`Plan '${args.id}' is done and cannot be modified.`,
+						"NEXT STEP: Create a new plan if further changes are needed.",
+					],
+				});
+			}
+
 			// --- Status transition (folder move) ---
 			if (args.status !== undefined && args.status !== currentStatus) {
 				if (!isValidTransition(currentStatus, args.status)) {
@@ -79,25 +97,7 @@ export const planUpdate = tool({
 				);
 			}
 
-			// --- Content changes: spec, implementation, and/or taskUpdates ---
-			// Note: schema enforces that implementation and taskUpdates are mutually exclusive.
-			const willChangeSpec = args.specifications !== undefined;
-			const willChangeImpl =
-				args.implementation !== undefined ||
-				(args.taskUpdates !== undefined && args.taskUpdates.length > 0);
-
 			if (willChangeSpec || willChangeImpl) {
-				// Done plans are immutable — reject any content modification
-				if (currentStatus === "done") {
-					return buildToolOutput({
-						type: "error",
-						text: [
-							`Plan '${args.id}' is done and cannot be modified.`,
-							"NEXT STEP: Create a new plan if further changes are needed.",
-						],
-					});
-				}
-
 				const specFilePath = join(currentPath, SPECIFICATIONS_FILE_NAME);
 				const implFilePath = join(currentPath, IMPLEMENTATION_FILE_NAME);
 
@@ -143,6 +143,7 @@ export const planUpdate = tool({
 				// Compute new impl content.
 				// Schema guarantees implementation and taskUpdates are mutually exclusive.
 				const taskErrors: string[] = [];
+				const failedTaskNames = new Set<string>();
 				let newImplContent = "";
 				if (willChangeImpl) {
 					if (args.implementation !== undefined) {
@@ -163,6 +164,7 @@ export const planUpdate = tool({
 								taskErrors.push(
 									`Failed to update task "${update.content}": ${error instanceof Error ? error.message : "Unknown error"}`,
 								);
+								failedTaskNames.add(update.content);
 							}
 						}
 
@@ -241,10 +243,8 @@ export const planUpdate = tool({
 
 						if (args.taskUpdates && args.taskUpdates.length > 0) {
 							for (const update of args.taskUpdates) {
-								// Only surface success for tasks that did not error
-								if (
-									!taskErrors.some((e) => e.includes(`"${update.content}"`))
-								) {
+								// Only surface success for tasks that did not error (exact-match check)
+								if (!failedTaskNames.has(update.content)) {
 									updateMessages.push(
 										`Task "${update.content}" → ${update.status}`,
 									);
