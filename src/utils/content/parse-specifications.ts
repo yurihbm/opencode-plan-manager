@@ -19,7 +19,7 @@ export function parseSpecifications(content: string): Specifications {
 	const ACCEPTANCE_REGEX =
 		/(?:^|\n)## Acceptance Criteria[^\n]*(?:\n|$)([\s\S]+?)(?=\n## |$)/g;
 	const OUT_OF_SCOPE_REGEX =
-		/(?:^|\n)## Out of Scope[^\n]*(?:\n|$)([\s\S]+?)(?=\n#{2,3} |$)/g;
+		/(?:^|\n)## Out of Scope[^\n]*(?:\n|$)([\s\S]+?)(?=\n## |$)/g;
 
 	const descriptionMatch = content.match(DESCRIPTION_REGEX);
 	const description = descriptionMatch?.[1]?.trim() ?? "";
