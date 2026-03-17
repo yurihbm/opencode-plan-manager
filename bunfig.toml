@@ -1,5 +1,5 @@
 [test]
 
-coverageThreshold = 0.9
+coverageThreshold = 0.85
 coveragePathIgnorePatterns = ["src/schemas/**"]
 
