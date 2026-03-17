@@ -60,6 +60,8 @@ export const planRead = tool({
 				metadata,
 			};
 
+			const missingFileWarnings: string[] = [];
+
 			// Read implementation file for progress stats (needed for summary too)
 			if (
 				args.view === "summary" ||
@@ -82,6 +84,10 @@ export const planRead = tool({
 					if (args.view === "plan" || args.view === "full") {
 						outputPlanContent.implementation = implementation;
 					}
+				} else {
+					missingFileWarnings.push(
+						`Warning: ${IMPLEMENTATION_FILE_NAME} not found — progress and task data unavailable.`,
+					);
 				}
 			}
 
@@ -94,6 +100,10 @@ export const planRead = tool({
 					const specContent = await specFile.text();
 					const specifications = parseSpecifications(specContent);
 					outputPlanContent.specifications = specifications;
+				} else {
+					missingFileWarnings.push(
+						`Warning: ${SPECIFICATIONS_FILE_NAME} not found — specification data unavailable.`,
+					);
 				}
 			}
 
@@ -105,7 +115,7 @@ export const planRead = tool({
 
 			return buildToolOutput({
 				type: "success",
-				text: [planOutput],
+				text: [planOutput, ...missingFileWarnings],
 			});
 		} catch (error) {
 			return buildToolOutput({

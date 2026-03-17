@@ -150,4 +150,103 @@ describe("plan_read", () => {
 
 		expect(result).toContain("Plan 'non-existent-id' not found");
 	});
+
+	test("warns when implementation.md is missing on summary view", async () => {
+		const fs = await import("node:fs/promises");
+		await fs.unlink(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				"implementation.md",
+			),
+		);
+
+		const result = await planRead.execute(
+			{ id: planId, view: "summary" },
+			ctx.context,
+		);
+
+		expect(result).toContain("implementation.md");
+		expect(result).toContain("not found");
+	});
+
+	test("warns when implementation.md is missing on plan view", async () => {
+		const fs = await import("node:fs/promises");
+		await fs.unlink(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				"implementation.md",
+			),
+		);
+
+		const result = await planRead.execute(
+			{ id: planId, view: "plan" },
+			ctx.context,
+		);
+
+		expect(result).toContain("implementation.md");
+		expect(result).toContain("not found");
+	});
+
+	test("warns when specifications.md is missing on spec view", async () => {
+		const fs = await import("node:fs/promises");
+		await fs.unlink(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				"specifications.md",
+			),
+		);
+
+		const result = await planRead.execute(
+			{ id: planId, view: "spec" },
+			ctx.context,
+		);
+
+		expect(result).toContain("specifications.md");
+		expect(result).toContain("not found");
+	});
+
+	test("warns when both files are missing on full view", async () => {
+		const fs = await import("node:fs/promises");
+		await fs.unlink(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				"implementation.md",
+			),
+		);
+		await fs.unlink(
+			join(
+				ctx.directory,
+				".opencode",
+				"plans",
+				"pending",
+				planId,
+				"specifications.md",
+			),
+		);
+
+		const result = await planRead.execute(
+			{ id: planId, view: "full" },
+			ctx.context,
+		);
+
+		expect(result).toContain("implementation.md");
+		expect(result).toContain("specifications.md");
+		expect(result).toContain("not found");
+	});
 });
