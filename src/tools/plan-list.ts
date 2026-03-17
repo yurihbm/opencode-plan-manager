@@ -15,6 +15,14 @@ import {
 } from "../utils";
 
 /**
+ * Builds the warning line appended to plan-list output when one or more plan
+ * folders could not be read (e.g. corrupt or missing metadata.json).
+ */
+function skippedFoldersWarning(folders: string[]): string {
+	return `Warning: ${folders.length} folder(s) could not be read: ${folders.join(", ")}`;
+}
+
+/**
  * PLAN_LIST: List plans by reading only metadata.json files
  */
 export const planList = tool({
@@ -47,6 +55,7 @@ export const planList = tool({
 			}
 
 			const results: Array<PlanMetadata> = [];
+			const skippedFolders: string[] = [];
 
 			// Scan each status directory
 			const paths = getPlanPaths(context.directory);
@@ -65,8 +74,8 @@ export const planList = tool({
 
 						results.push(metadata);
 					} catch {
-						// Skip folders with invalid metadata
-						continue;
+						// Track folders that could not be read instead of silently skipping
+						skippedFolders.push(folderName);
 					}
 				}
 			}
@@ -77,21 +86,37 @@ export const planList = tool({
 					filterDesc += `${args.status} `;
 				}
 
+				const noPlansText: string[] = [
+					`No ${filterDesc}plans found.`,
+					"NEXT STEP: Use plan_create to create a new plan.",
+				];
+
+				if (skippedFolders.length > 0) {
+					noPlansText.push(skippedFoldersWarning(skippedFolders));
+				}
+
 				return buildToolOutput({
 					type: "info",
-					text: [
-						`No ${filterDesc}plans found.`,
-						"NEXT STEP: Use plan_create to create a new plan.",
-					],
+					text: noPlansText,
 				});
 			}
 
 			// Format results as a table
 			const table = generateMetadatasTable(results);
 
+			const successText: string[] = [
+				`Found ${results.length} plan(s):`,
+				"",
+				table,
+			];
+
+			if (skippedFolders.length > 0) {
+				successText.push(skippedFoldersWarning(skippedFolders));
+			}
+
 			return buildToolOutput({
 				type: "success",
-				text: [`Found ${results.length} plan(s):`, "", table],
+				text: successText,
 			});
 		} catch (error) {
 			return buildToolOutput({

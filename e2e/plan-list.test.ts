@@ -148,4 +148,32 @@ describe("plan_list", () => {
 		expect(result).toContain(p1);
 		expect(result).not.toContain(p2);
 	});
+
+	test("surfaces a warning for corrupt metadata folders but still lists valid plans", async () => {
+		const goodId = await createPlan("Good Plan", "feature");
+
+		// Write a corrupt metadata.json in a new plan folder under pending
+		const fs = await import("node:fs/promises");
+		const corruptFolderPath = join(
+			ctx.directory,
+			".opencode",
+			"plans",
+			"pending",
+			"feature_corrupt_20260317_dead",
+		);
+		await fs.mkdir(corruptFolderPath, { recursive: true });
+		await fs.writeFile(
+			join(corruptFolderPath, "metadata.json"),
+			"{ this is not valid json",
+		);
+
+		const result = await planList.execute({ status: "active" }, ctx.context);
+
+		// The readable plan should still be listed
+		expect(result).toContain(goodId);
+
+		// A warning about the unreadable folder should be surfaced
+		expect(result).toContain("feature_corrupt_20260317_dead");
+		expect(result).toContain("could not be read");
+	});
 });
