@@ -134,7 +134,7 @@ describe("plan_create", () => {
 		// expect(specMd).toContain("## Overview");
 	});
 
-	test("should handle duplicate plan titles by appending suffix", async () => {
+	test("should create two plans with the same title as distinct folders (hex suffix uniqueness)", async () => {
 		const input: CreatePlanInput = {
 			metadata: {
 				title: "Duplicate Plan",
@@ -155,27 +155,27 @@ describe("plan_create", () => {
 		};
 
 		// First creation
-		await planCreate.execute(input, ctx.context);
+		const result1 = await planCreate.execute(input, ctx.context);
+		expect(result1).toContain("Plan created.");
 
-		// Second creation with same title
+		// Second creation with same title — hex suffix ensures a distinct ID
 		const result2 = await planCreate.execute(input, ctx.context);
-
 		expect(result2).toContain("Plan created.");
-		// Should have a suffix like -2
-		// expected ID: bug_duplicate-plan_DATE-2
 
 		const pendingDir = join(ctx.directory, ".opencode", "plans", "pending");
 		const fs = await import("node:fs/promises");
 		const entries = await fs.readdir(pendingDir);
 
-		// Should have 2 folders
+		// Both plans should exist as separate folders
 		expect(entries.length).toBe(2);
 
-		const basePlan = entries.find((e) => !e.endsWith("-2"));
-		const suffixedPlan = entries.find((e) => e.endsWith("-2"));
+		// Both should match the expected prefix pattern
+		for (const entry of entries) {
+			expect(entry).toMatch(/^bug_duplicate-plan_\d{8}_[0-9a-f]{4}$/);
+		}
 
-		expect(basePlan).toBeDefined();
-		expect(suffixedPlan).toBeDefined();
+		// They must have distinct IDs
+		expect(entries[0]).not.toBe(entries[1]);
 	});
 
 	test("should fail if duplicate phases exist", async () => {

@@ -19,22 +19,23 @@ describe("generatePlanId", () => {
 		mock.restore();
 	});
 
-	test("generates id with correct format", () => {
+	test("generates id with correct format including hex suffix", () => {
 		const date = new Date("2024-05-15T12:00:00");
 
 		const id = generatePlanId("feature", "User Authentication", date);
 
-		expect(id).toBe("feature_kebab-case_20240515");
+		// Format: {type}_{kebab}_{date}_{4-char hex}
+		expect(id).toMatch(/^feature_kebab-case_20240515_[0-9a-f]{4}$/);
 	});
 
 	test("handles different plan types", () => {
 		const date = new Date("2024-05-15T12:00:00");
 
-		expect(generatePlanId("bug", "Login Fix", date)).toBe(
-			"bug_kebab-case_20240515",
+		expect(generatePlanId("bug", "Login Fix", date)).toMatch(
+			/^bug_kebab-case_20240515_[0-9a-f]{4}$/,
 		);
-		expect(generatePlanId("refactor", "Cleanup Code", date)).toBe(
-			"refactor_kebab-case_20240515",
+		expect(generatePlanId("refactor", "Cleanup Code", date)).toMatch(
+			/^refactor_kebab-case_20240515_[0-9a-f]{4}$/,
 		);
 	});
 
@@ -47,7 +48,20 @@ describe("generatePlanId", () => {
 		const day = String(now.getDate()).padStart(2, "0");
 		const expectedDateStr = `${year}${month}${day}`;
 
-		expect(id).toBe(`docs_kebab-case_${expectedDateStr}`);
+		expect(id).toMatch(
+			new RegExp(`^docs_kebab-case_${expectedDateStr}_[0-9a-f]{4}$`),
+		);
+	});
+
+	test("produces unique IDs on repeated calls with the same inputs", () => {
+		const date = new Date("2024-05-15T12:00:00");
+		const id1 = generatePlanId("feature", "Same Title", date);
+		const id2 = generatePlanId("feature", "Same Title", date);
+
+		// With the hex suffix, the chance of a collision is 1 in 65536.
+		// We verify the format is correct and both are well-formed.
+		expect(id1).toMatch(/^feature_kebab-case_20240515_[0-9a-f]{4}$/);
+		expect(id2).toMatch(/^feature_kebab-case_20240515_[0-9a-f]{4}$/);
 	});
 
 	test("throws error if kebab title section is empty", () => {

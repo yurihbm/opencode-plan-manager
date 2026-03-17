@@ -38,28 +38,10 @@ export const planCreate = tool({
 			await ensurePlanDirectories(context.directory);
 			const paths = getPlanPaths(context.directory);
 
-			// Generate deterministic id
-			let planId = generatePlanId(args.metadata.type, args.metadata.title);
+			// Generate unique id (includes a 4-char hex suffix to avoid collisions)
+			const planId = generatePlanId(args.metadata.type, args.metadata.title);
 
-			// Handle duplicate Plan IDs by appending a counter suffix
-			let counter = 2;
-			while (
-				await Bun.file(join(paths.pending, planId, "metadata.json")).exists()
-			) {
-				planId = `${planId}-${counter}`;
-				counter++;
-				if (counter > 5) {
-					return buildToolOutput({
-						type: "warning",
-						text: [
-							"Too many plans with similar titles.",
-							"NEXT STEP: Choose a more unique title or check existing plans with plan_list.",
-						],
-					});
-				}
-			}
-
-			// Also check in_progress and done to avoid cross-status duplicates
+			// Verify no cross-status collision exists (extremely unlikely with hex suffix)
 			const existingLocation = await resolvePlanFolder(
 				context.directory,
 				planId,
