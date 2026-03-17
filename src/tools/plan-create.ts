@@ -1,4 +1,4 @@
-import type { PlanMetadata, PlanType } from "../types";
+import type { PlanMetadata } from "../types";
 
 import { rm } from "node:fs/promises";
 import { join, relative } from "node:path";
@@ -89,7 +89,7 @@ export const planCreate = tool({
 			const now = new Date().toISOString();
 			const metadata: PlanMetadata = {
 				id: planId,
-				type: args.metadata.type as PlanType,
+				type: args.metadata.type,
 				status: "pending",
 				created_at: now,
 				updated_at: now,
