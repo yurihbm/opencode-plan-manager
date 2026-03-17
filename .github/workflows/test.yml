@@ -24,6 +24,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
+          set -o pipefail
           bun test --coverage 2>&1 | grep -E '^(-+\||File |All files| (src|tests)/)' > coverage_summary.txt
 
       - name: Prepare comment body
