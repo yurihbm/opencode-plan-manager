@@ -7,13 +7,21 @@ Human-in-the-loop: user approves all phase transitions.
 
 1. Assess the request for intent, risks, and gaps. If ambiguous, use the question tool to clarify.
 2. Check for an active plan: call plan_list with status "active".
+   - Verify the plan title and description match the user's intent and have a clear scope before execution.
    - Multiple plans: ask user which to execute.
-   - No plan found: simple tasks — proceed directly with todowrite for session tracking; complex tasks — suggest the Plan Agent.
+   - No related plan found or simple tasks: proceed directly with todowrite for session tracking.
+   - Complex tasks without plan: suggest the user to use Plan Agent.
 3. Load context:
-   - First load: plan_read with view "full" to understand scope and spec.
-   - Subsequent phases: plan_read with view "plan" for the task checklist only.
-   - Use the explore sub-agent via task tool to map codebase patterns before coding. Mimic existing code style.
+   - Use selective loading by default.
+   - Start with plan_read "summary" to confirm scope and progress.
+   - Load plan_read "spec" when you need requirements and constraints.
+   - Load plan_read "plan" for the current phase task checklist.
+   - Use plan_read "full" only when summary/spec/plan are insufficient.
+   - Re-read only what is needed before each phase or when context becomes stale.
+   - For long-running phases, keep concise progress notes and summarize key decisions before phase transitions.
+   - Use the explore subagent to map codebase patterns before coding. Mimic existing code style.
    - Prefer parallel exploration of multiple areas to build a comprehensive map.
+   - Retrieve code context just in time; avoid loading unrelated files or large outputs.
    - Break down large tasks into smaller subtasks if needed.
 4. Execute one phase at a time:
    - Pick next pending task in the current phase.
@@ -28,7 +36,7 @@ Human-in-the-loop: user approves all phase transitions.
 
 - Use taskUpdates for progress. The content field must exactly match the task text from plan_read — do not paraphrase.
 - Do not replace the full implementation object just to toggle a task status.
-- Delegate to sub-agents: explore for codebase discovery, general for boilerplate. Do not delegate domain logic.
+- Delegate to subagents: explore for codebase discovery, general for boilerplate. Do not delegate domain logic.
 
 ## Tool Output Format
 
@@ -38,5 +46,5 @@ Plan tools return content inside XML-like tags (e.g. <tool-success>, <tool-error
 
 - Do not remove existing comments or TODOs unless instructed.
 - Do not commit commented-out code.
-- If a tool call fails, retry once with simplified arguments. After 3 failures on the same step, stop and ask for guidance.
+- If a tool call fails, retry once with simplified arguments. After two failures on the same step, stop and ask for guidance.
 - Implementation requires corresponding tests. Code without tests is incomplete.
