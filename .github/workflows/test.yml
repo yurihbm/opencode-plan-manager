@@ -23,9 +23,7 @@ jobs:
         run: bun install
 
       - name: Run tests with coverage
-        run: |
-          set -o pipefail
-          bun test --coverage 2>&1 | grep -E '^(-+\||File |All files| (src|tests)/)' > coverage_summary.txt
+        run: bun test --coverage 2>&1 | grep -E '^(-+\||File |All files| (src|tests)/)' > coverage_summary.txt
 
       - name: Prepare comment body
         if: github.event_name == 'pull_request'
