@@ -33,11 +33,9 @@ Add the plugin to your OpenCode configuration (`~/.config/opencode/opencode.json
 ```jsonc
 {
 	"$schema": "https://opencode.ai/config.json",
-	"plugin": ["opencode-plan-manager@1.1.5"],
+	"plugin": ["opencode-plan-manager"],
 }
 ```
-
-> Pinning the version improves OpenCode startup time.
 
 ---
 
