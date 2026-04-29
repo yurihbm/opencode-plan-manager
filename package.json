@@ -41,13 +41,13 @@
 		"jiti": "^2.6.1",
 		"lint-staged": "^16.4.0",
 		"prettier": "^3.8.3",
-		"typescript-eslint": "^8.59.0"
+		"typescript-eslint": "^8.59.1"
 	},
 	"peerDependencies": {
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@opencode-ai/plugin": "^1.14.26",
+		"@opencode-ai/plugin": "^1.14.29",
 		"@toon-format/toon": "^2.1.0",
 		"diff": "^8.0.4"
 	},
