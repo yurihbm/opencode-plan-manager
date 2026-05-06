@@ -1,0 +1,8 @@
+{
+  "id": "feature_authentication-system-for-nestjs-rest-api_20260317_f6dd",
+  "type": "feature",
+  "status": "pending",
+  "created_at": "2026-03-17T04:59:08.323Z",
+  "updated_at": "2026-03-17T04:59:08.323Z",
+  "description": "Implement a complete, production-ready authentication system for a NestJS REST API, covering user registration, login, JWT-based session management, refresh token rotation, role-based access control (RBAC), and password reset flow."
+}

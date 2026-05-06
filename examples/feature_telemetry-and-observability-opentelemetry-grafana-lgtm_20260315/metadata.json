@@ -1,0 +1,8 @@
+{
+  "id": "feature_telemetry-and-observability-opentelemetry-grafana-lgtm_20260315",
+  "type": "feature",
+  "status": "pending",
+  "created_at": "2026-03-15T20:32:59.252Z",
+  "updated_at": "2026-03-15T21:07:39.520Z",
+  "description": "Full observability stack with distributed tracing, metrics, and log correlation using OpenTelemetry and the Grafana LGTM stack (Loki, Grafana, Tempo, Prometheus, OTel Collector). Follows TELEMETRY_AND_O11Y.md spec with TDD (Red-Green-Refactor) and SOLID principles."
+}
