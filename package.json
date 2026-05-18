@@ -34,20 +34,20 @@
 		"@eslint/js": "^10.0.1",
 		"@ianvs/prettier-plugin-sort-imports": "^4.7.1",
 		"@types/bun": "latest",
-		"eslint": "^10.3.0",
+		"eslint": "^10.4.0",
 		"eslint-config-prettier": "^10.1.8",
 		"globals": "^17.6.0",
 		"husky": "^9.1.7",
 		"jiti": "^2.7.0",
 		"lint-staged": "^16.4.0",
 		"prettier": "^3.8.3",
-		"typescript-eslint": "^8.59.3"
+		"typescript-eslint": "^8.59.4"
 	},
 	"peerDependencies": {
 		"typescript": "^5.9.3"
 	},
 	"dependencies": {
-		"@opencode-ai/plugin": "^1.14.49",
+		"@opencode-ai/plugin": "^1.15.5",
 		"@toon-format/toon": "^2.2.0",
 		"diff": "^8.0.4"
 	},
